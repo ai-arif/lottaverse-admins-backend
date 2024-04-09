@@ -47,7 +47,12 @@ const userSchema = new mongoose.Schema({
     referredUsers: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }]
+    }],
+    totalTickets: {
+        type: Number,
+        required: true,
+        default: 0
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
