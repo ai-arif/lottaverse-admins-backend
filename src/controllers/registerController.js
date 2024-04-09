@@ -29,18 +29,19 @@ exports.registerUser = async (req, res) => {
                         referralId,
                         referralLevel: referredBy.referralLevel + 1,
                         referredBy: referredBy._id,
-                        referralLink: referralLinkForUser
+                        referralLink: referralLinkForUser,
+                        expiryDate: new Date(new Date().setDate(new Date().getDate() + 30))
                     });
                     
                     referredBy.referredUsers.push(user);
                     await referredBy.save();
                 }
             } else {
-                user = await User.create({ address, referralId, referralLink: referralLinkForUser });
+                user = await User.create({ address, referralId, referralLink: referralLinkForUser, expiryDate: new Date(new Date().setDate(new Date().getDate() + 30))});
             }
         }
 
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '10d' });
 
         sendResponse(res, 200, true, 'User registered successfully', { token });
     } catch (err) {
@@ -60,7 +61,7 @@ exports.getUsersDetails = async (req, res) => {
 
 exports.getUserDetails = async (req, res) => {
     try {
-        const userId = req.params.id;
+        const userId = req.id;
         const user = await User.findById(userId);
         sendResponse(res, 200, true, 'User details fetched successfully', user);
     }

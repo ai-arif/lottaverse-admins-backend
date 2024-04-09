@@ -8,7 +8,7 @@ const {getReferralHierarchy}=require('../controllers/referralController');
 router.get('/referral-hierarchy',verifyToken, getReferralHierarchy);
 router.get('/leaderboard', getLeaderboard);
 router.get('/users',  getUsersDetails);
-router.get('/user', getUserDetails);
+router.get('/user', verifyToken,getUserDetails);
 
 router.post('/register', registerUser);
 

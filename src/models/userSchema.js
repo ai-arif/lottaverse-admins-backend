@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema({
         required: true,
         default: 0
     },
+    earnings: {
+        type: Number,
+        required: true,
+        default: 0
+    },
     transactions: {
         type: Array,
         required: true,
@@ -53,6 +58,10 @@ const userSchema = new mongoose.Schema({
         required: true,
         default: 0
     },
+    expiryDate: {
+        type: Date,
+        required: true
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
