@@ -58,6 +58,17 @@ exports.getUsersDetails = async (req, res) => {
     }
 };
 
+exports.getUserDetails = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await User.findById(userId);
+        sendResponse(res, 200, true, 'User details fetched successfully', user);
+    }
+    catch (err) {
+        sendResponse(res, 500, false, err.message, err.message);
+    }
+}
+
 
 
 function generateReferralId() {
