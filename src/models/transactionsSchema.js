@@ -1,7 +1,5 @@
 const mongoose=require('mongoose');
-// type: 'debit',
-// amount: totalAmount,
-// description: 'Ticket purchase'
+
 const transactionSchema = new mongoose.Schema({
     type: {
         type: String,
@@ -16,3 +14,5 @@ const transactionSchema = new mongoose.Schema({
         required: true
     }
 },{timestamps:true});
+
+module.exports = mongoose.model('Transaction', transactionSchema);

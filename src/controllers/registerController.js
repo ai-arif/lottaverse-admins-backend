@@ -31,7 +31,7 @@ exports.registerUser = async (req, res) => {
                         referredBy: referredBy._id,
                         referralLink: referralLinkForUser
                     });
-                    console.log('created user', user);
+                    
                     referredBy.referredUsers.push(user);
                     await referredBy.save();
                 }

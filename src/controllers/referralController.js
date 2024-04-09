@@ -24,7 +24,7 @@ exports.getReferralHierarchy = async (req, res) => {
 };
 
 function buildHierarchy(user) {
-    console.log(user)
+    
     const hierarchy = {
         name: user.address, // Assuming you want to use user's address as the name
         children: []
