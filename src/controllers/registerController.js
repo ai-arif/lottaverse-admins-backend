@@ -17,6 +17,7 @@ exports.registerUser = async (req, res) => {
         const referralId = generateReferralId();
         const referralLinkForUser = generateReferralLink(referralId);
 
+
         let user = await User.findOne({ address });
 
         if (!user) {
@@ -30,6 +31,7 @@ exports.registerUser = async (req, res) => {
                         referredBy: referredBy._id,
                         referralLink: referralLinkForUser
                     });
+                    console.log('created user', user);
                     referredBy.referredUsers.push(user);
                     await referredBy.save();
                 }

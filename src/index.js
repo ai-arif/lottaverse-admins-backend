@@ -12,6 +12,7 @@ db.once('open', () => {
 });
 // Enable CORS
 app.use(cors());
+app.use(express.json());
 
 // Define a route handler for the default home page
 app.get('/', (req, res) => {
