@@ -33,7 +33,16 @@ const userSchema = new mongoose.Schema({
     referralLevel: {
         type: Number,
         required: true,
-        default: 0
+        default: 1
+    },
+    referredBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    referralLink: {
+        type: String,
+        default: null
     },
     referredUsers: [{
         type: mongoose.Schema.Types.ObjectId,

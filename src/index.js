@@ -17,8 +17,6 @@ app.use(cors());
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });
-
-// Define a route handler for the /leaderboard route
 app.use('/api', apiRoutes);
 
 // Get the port from the environment variables or use 5000 as a default

@@ -6,7 +6,6 @@ exports.registerUser = async (req, res) => {
     try {
         const { address, referralLink } = req.body;
 
-        // Extract parent referral ID from the referral link
         let parentReferralId = null;
         if (referralLink) {
             const match = referralLink.match(/ref=([^&]+)/);
@@ -15,33 +14,30 @@ exports.registerUser = async (req, res) => {
             }
         }
 
-        // Check if the address is already registered
+        const referralId = generateReferralId();
+        const referralLinkForUser = generateReferralLink(referralId);
+
         let user = await User.findOne({ address });
 
-        // Generate referral ID and reference URL for the new user
-        const referralId = generateReferralId();
-        const referenceUrl = parentReferralId || referralId;
-
-        // If the address is not registered, create a new user
         if (!user) {
-            user = await User.create({ address, referralId });
-
-            // If a parent referral ID is provided, update the referral information
             if (parentReferralId) {
-                const referredUser = await User.findOne({ referralId: parentReferralId });
-                if (referredUser) {
-                    user.referralId = parentReferralId;
-                    user.referralLevel = referredUser.referralLevel + 1;
-                    await user.save();
-
-                    // Add the user to the referred users list of the referred user
-                    referredUser.referredUsers.push(user);
-                    await referredUser.save();
+                const referredBy = await User.findOne({ referralId: parentReferralId });
+                if (referredBy) {
+                    user = await User.create({
+                        address,
+                        referralId,
+                        referralLevel: referredBy.referralLevel + 1,
+                        referredBy: referredBy._id,
+                        referralLink: referralLinkForUser
+                    });
+                    referredBy.referredUsers.push(user);
+                    await referredBy.save();
                 }
+            } else {
+                user = await User.create({ address, referralId, referralLink: referralLinkForUser });
             }
         }
 
-        // Generate JWT token
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
         sendResponse(res, 200, true, 'User registered successfully', { token });
@@ -50,25 +46,11 @@ exports.registerUser = async (req, res) => {
     }
 };
 
-// Function to generate referral ID
-function generateReferralId() {
-    return 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-// Function to generate reference URL
-function generateReferenceUrl(referralId) {
-    return `${process.env.APP_URL}/register?ref=${referralId}`;
-}
-
-// Function to validate the address
-function validateAddress(address) {
-    return /^(0x)?[0-9a-fA-F]{40}$/.test(address);
-}
-// get users details
-exports.getUserDetails = async (req, res) => {
+// getUsersDetails
+exports.getUsersDetails = async (req, res) => {
     try {
-        const user = await User.findById(req.id).populate('referredUsers');
-        sendResponse(res, 200, true, 'User details fetched successfully', user);
+        const users = await User.find().populate('referredUsers');
+        sendResponse(res, 200, true, 'Users details fetched successfully', users);
     } catch (err) {
         sendResponse(res, 500, false, 'Internal server error', err.message);
     }
@@ -76,3 +58,10 @@ exports.getUserDetails = async (req, res) => {
 
 
 
+function generateReferralId() {
+    return 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function generateReferralLink(referralId) {
+    return `${process.env.APP_URL}/register?ref=${referralId}`;
+}
