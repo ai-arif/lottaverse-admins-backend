@@ -1,6 +1,5 @@
 const User=require('../models/userSchema');
 const sendResponse=require('../utils/sendResponse');
-// get top 30 users with highest payout
 
 exports.getLeaderboard = async (req, res) => {
     try {

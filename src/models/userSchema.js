@@ -1,4 +1,5 @@
-const mongoose=require('mongoose');
+const mongoose = require('mongoose');
+
 const userSchema = new mongoose.Schema({
     address: {
         type: String,
@@ -24,7 +25,20 @@ const userSchema = new mongoose.Schema({
         type: Number,
         required: true,
         default: 0
-    }
-},{timestamps:true});
+    },
+    referralId: {
+        type: String,
+        unique: true
+    },
+    referralLevel: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    referredUsers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }]
+}, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
