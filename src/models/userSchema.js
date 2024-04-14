@@ -6,11 +6,6 @@ const userSchema = new mongoose.Schema({
         unique: true,
         required: true
     },
-    totalBalance: {
-        type: Number,
-        required: true,
-        default: 0
-    },
     earnings: {
         type: Number,
         required: true,
@@ -61,6 +56,16 @@ const userSchema = new mongoose.Schema({
     expiryDate: {
         type: Date,
         required: true
+    },
+    lastSeen: {
+        type: Date,
+        required: true,
+        default: Date.now
+    },
+    userType:{
+        type: String,
+        required: true,
+        default: 'user'
     }
 }, { timestamps: true });
 

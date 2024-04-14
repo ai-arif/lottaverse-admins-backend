@@ -5,7 +5,7 @@ const sendResponse = require('../utils/sendResponse');
 exports.registerUser = async (req, res) => {
     try {
         const { address, referralLink } = req.body;
-
+        
         let parentReferralId = null;
         if (referralLink) {
             const match = referralLink.match(/ref=([^&]+)/);
@@ -77,5 +77,5 @@ function generateReferralId() {
 }
 
 function generateReferralLink(referralId) {
-    return `${process.env.APP_URL}/register?ref=${referralId}`;
+    return `${process.env.APP_URL}?ref=${referralId}`;
 }
