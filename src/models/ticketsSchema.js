@@ -21,6 +21,11 @@ const ticketSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    lotteryId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Lottery',
+        required: true
+    },
 },{timestamps:true});
 
 module.exports = mongoose.model('Ticket', ticketSchema);
