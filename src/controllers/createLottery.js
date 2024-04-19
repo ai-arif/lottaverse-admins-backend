@@ -85,18 +85,47 @@ const createLottery = async (req, res) => {
   }
 };
 
-const activeLotteries= async (req, res) => {
+const activeLotteries = async (req, res) => {
   try {
-    // get activeLotteires with diffrernt lotteryId, last 3 
+    // Get active lotteries with different lotteryId, last 3 
     const activeLotteries = await Lottery.find({
       isActive: true,
     })
       .sort({ createdAt: -1 })
       .limit(3);
-    sendResponse(res, 200, true, "Active lotteries", activeLotteries);
+
+    // Count lotteries for each round
+    const roundZero = await Lottery.countDocuments({
+      lotteryId: { $mod: [3, 0] },
+    });
+
+    const roundOne = await Lottery.countDocuments({
+      lotteryId: { $mod: [3, 1] },
+    });
+
+    const roundTwo = await Lottery.countDocuments({
+      lotteryId: { $mod: [3, 2] },
+    });
+
+    // Map through activeLotteries to add round numbers to each lottery
+    const lotteriesWithRound = activeLotteries.map((lottery) => {
+      if (lottery.lotteryId % 3 === 0) {
+        return { ...lottery.toObject(), round: roundZero };
+      } else if (lottery.lotteryId % 3 === 1) {
+        return { ...lottery.toObject(), round: roundOne };
+      } else {
+        return { ...lottery.toObject(), round: roundTwo };
+      }
+    });
+
+    
+
+    // Send response with lotteries including round numbers
+    sendResponse(res, 200, true, "Active lotteries", lotteriesWithRound);
   } catch (error) {
-    sendResponse(res, 500, false, "Internal server error", error.message);
+    sendResponse(res, 500, false, error.message, error.message);
   }
 };
+
 
 module.exports = { createLottery,activeLotteries };

@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
 app.use("/api", apiRoutes);
 
 // Get the port from the environment variables or use 5000 as a default
-const port = 6000;
+const port = process.env.PORT || 5000;
 
 // Start the server
 app.listen(port, () => {
