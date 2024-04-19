@@ -85,4 +85,18 @@ const createLottery = async (req, res) => {
   }
 };
 
-module.exports = { createLottery };
+const activeLotteries= async (req, res) => {
+  try {
+    // get activeLotteires with diffrernt lotteryId, last 3 
+    const activeLotteries = await Lottery.find({
+      isActive: true,
+    })
+      .sort({ createdAt: -1 })
+      .limit(3);
+    sendResponse(res, 200, true, "Active lotteries", activeLotteries);
+  } catch (error) {
+    sendResponse(res, 500, false, "Internal server error", error.message);
+  }
+};
+
+module.exports = { createLottery,activeLotteries };

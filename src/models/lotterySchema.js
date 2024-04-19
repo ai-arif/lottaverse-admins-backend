@@ -17,6 +17,6 @@ const lotterySchema = new mongoose.Schema({
   transactionHash: String,
   isActive: Boolean,
   hasDraw: Boolean,
-});
+},{timestamps:true});
 
 module.exports = mongoose.model("Lottery", lotterySchema);

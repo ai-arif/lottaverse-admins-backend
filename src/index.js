@@ -5,14 +5,16 @@ const apiRoutes = require("./routes/apiRoutes");
 const db = require("./db_config/db");
 const app = express();
 
+
+// Enable CORS
+app.use(cors());
+app.use(express.json());
 // Connect to the database
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
 db.once("open", () => {
   console.log("Connected to the database");
 });
-// Enable CORS
-app.use(cors());
-app.use(express.json());
+
 
 // Define a route handler for the default home page
 app.get("/", (req, res) => {
