@@ -2,9 +2,6 @@ const Lottery = require("../models/lotterySchema");
 const sendResponse = require("../utils/sendResponse");
 const moment = require("moment");
 
-// const contract = require("./lotteryContract");
-// const web3 = require("./web3Config");
-
 const createLottery = async (req, res) => {
   try {
     // api body accept params
@@ -30,6 +27,7 @@ const createLottery = async (req, res) => {
       operatorCommissionPercentage,
       expiry,
       lotteryType,
+      lotteryID,
       firstPrize,
       secondPrize,
       thirdPrize,
@@ -60,7 +58,8 @@ const createLottery = async (req, res) => {
       maxTickets: maxTicketCount,
       operatorCommissionPercentage,
       expiration: unixEpochTime,
-      lotteryId: lotteryType,
+      lotteryID,
+      lotteryType,
       prizes: {
         firstPrize,
         secondPrize,
@@ -87,7 +86,7 @@ const createLottery = async (req, res) => {
 
 const activeLotteries = async (req, res) => {
   try {
-    // Get active lotteries with different lotteryId, last 3 
+    // Get active lotteries with different lotteryId, last 3
     const activeLotteries = await Lottery.find({
       isActive: true,
     })
@@ -118,8 +117,6 @@ const activeLotteries = async (req, res) => {
       }
     });
 
-    
-
     // Send response with lotteries including round numbers
     sendResponse(res, 200, true, "Active lotteries", lotteriesWithRound);
   } catch (error) {
@@ -127,5 +124,4 @@ const activeLotteries = async (req, res) => {
   }
 };
 
-
-module.exports = { createLottery,activeLotteries };
+module.exports = { createLottery, activeLotteries };
