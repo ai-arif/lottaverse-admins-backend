@@ -1,6 +1,7 @@
 const Lottery = require("../models/lotterySchema");
 const sendResponse = require("../utils/sendResponse");
 const moment = require("moment");
+const ethers = require("ethers");
 
 const createLottery = async (req, res) => {
   try {
@@ -26,8 +27,8 @@ const createLottery = async (req, res) => {
       maxTicketCount,
       operatorCommissionPercentage,
       expiry,
-      lotteryType,
       lotteryID,
+      lotteryType,
       firstPrize,
       secondPrize,
       thirdPrize,
@@ -37,6 +38,21 @@ const createLottery = async (req, res) => {
     } = req.body;
 
     const unixEpochTime = moment(expiry).unix();
+
+    const ticketprice = Number(ethers.parseEther(ticketPrice));
+    const firstprize = Number(ethers.parseEther(firstPrize.toString()));
+    const secondprize = Number(ethers.parseEther(secondPrize.toString()));
+    const thirdprize = Number(ethers.parseEther(thirdPrize.toString()));
+    const fourthprize = Number(ethers.parseEther(fourthPrize.toString()));
+    const otherprize = Number(ethers.parseEther(otherPrizes.toString()));
+    console.log("THis is ticket prize", ticketprice);
+    const prizes = {
+      firstPrize: firstprize,
+      secondPrize: secondprize,
+      thirdPrize: thirdprize,
+      fourthPrize: fourthprize,
+      otherPrizes: otherprize,
+    };
 
     // Calling the smart contract functions
     // const accounts = await web3.eth.getAccounts();
@@ -54,24 +70,19 @@ const createLottery = async (req, res) => {
     // Save to MongoDB
     const lottery = new Lottery({
       lotteryOperator,
-      ticketPrice,
+      ticketPrice: ticketprice,
       maxTickets: maxTicketCount,
       operatorCommissionPercentage,
       expiration: unixEpochTime,
       lotteryID,
       lotteryType,
-      prizes: {
-        firstPrize,
-        secondPrize,
-        thirdPrize,
-        fourthPrize,
-        otherPrizes,
-      },
+      prizes,
       transactionHash,
       isActive: true,
       hasDraw: false,
     });
     console.log(lottery);
+    // console.log("HH", JSON.stringify(lottery));
     const result = await lottery.save();
     console.log(result);
     sendResponse(res, 200, true, "Lottery created successfully", result);
