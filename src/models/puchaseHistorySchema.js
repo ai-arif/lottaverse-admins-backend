@@ -18,7 +18,11 @@ const purchaseHistorySchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    totalAmount: {
+    transactionHash:{
+        type:String,
+        required:true
+    },
+    amount: {
         type: Number,
         required: true
     }
