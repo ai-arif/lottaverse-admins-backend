@@ -7,9 +7,12 @@ const purchaseHistorySchema = new mongoose.Schema({
         required: true
     },
     ticketId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Ticket',
+        type: String,
         required: true
+    },
+    lotteryId:{
+        type:Number,
+        required:true
     },
     ticketQuantity: {
         type: Number,
