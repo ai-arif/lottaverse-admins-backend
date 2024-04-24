@@ -41,7 +41,26 @@ const createPurchaseHistory=async(req,res)=>{
     try {
         const {ticketIds,lotteryId,transactionHash}=req.body
         const userId=req.id
-        console.log(lotteryId)
+        
+        const pipeline = [
+            { $match: { _id: userId } }, // Match the starting user
+            { $graphLookup: {
+                from: "users", 
+                startWith: "$_id",
+                connectFromField: "referredBy",
+                connectToField: "_id", 
+                maxDepth: 7, 
+                depthField: "level", 
+                as: "referrers"
+              }
+            }
+          ];
+          
+          const referrerHierarchy = await User.aggregate(pipeline);
+          
+          const referrers = referrerHierarchy.length > 0 ? referrerHierarchy[0].referrers : [];
+          console.log(referrers);
+          
         const lottery = await lotterySchema.findOne({"lotteryID":lotteryId})
         if(!lottery){
             return sendResponse(res,404,'Lottery not found')
@@ -54,7 +73,7 @@ const createPurchaseHistory=async(req,res)=>{
 
         console.log(lottery.ticketPrice)
 
-        return sendResponse(res,200,true,'Purchase history created successfully')
+        return sendResponse(res,200,true,'Purchase history created successfully',referrers)
 
     } catch (error) {
         sendResponse(res,500,error.message)
