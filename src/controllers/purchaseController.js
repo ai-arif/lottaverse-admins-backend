@@ -1,8 +1,9 @@
-const PurchaseHistory=require('../models/puchaseHistorySchema')
-const lotterySchema=require('../models/lotterySchema')
-const User=require('../models/userSchema')
-const Ticket=require('../models/ticketsSchema')
-const sendResponse=require('../utils/sendResponse')
+const PurchaseHistory = require('../models/puchaseHistorySchema')
+const lotterySchema = require('../models/lotterySchema')
+const CommissionHistory = require('../models/commissionHistory')
+const User = require('../models/userSchema')
+const Ticket = require('../models/ticketsSchema')
+const sendResponse = require('../utils/sendResponse')
 
 // user id will be on req.id , write crud
 // const purchaseHistorySchema = new mongoose.Schema({
@@ -37,42 +38,40 @@ const sendResponse=require('../utils/sendResponse')
 
 // create purchase history, user id will be req.id
 
-const createPurchaseHistory=async(req,res)=>{
+const createPurchaseHistory = async (req, res) => {
     try {
-        const {ticketIds,lotteryId,transactionHash}=req.body
-        const userId=req.id
-        
+        const { ticketIds, lotteryId, transactionHash } = req.body
+        const userId = req.id
+
         const pipeline = [
             { $match: { _id: userId } },
-            { $graphLookup: {
-                from: "users", 
-                startWith: "$_id",
-                connectFromField: "referredBy",
-                connectToField: "_id", 
-                maxDepth: 7, 
-                depthField: "level", 
-                as: "referrers"
-              }
+            {
+                $graphLookup: {
+                    from: "users",
+                    startWith: "$_id",
+                    connectFromField: "referredBy",
+                    connectToField: "_id",
+                    maxDepth: 7,
+                    depthField: "level",
+                    as: "referrers"
+                }
             }
-          ];
-          
-          const referrerHierarchy = await User.aggregate(pipeline);
-          
-          const referrers = referrerHierarchy.length > 0 ? referrerHierarchy[0].referrers : [];
-          console.log(referrers);
-          
-        const lottery = await lotterySchema.findOne({"lotteryID":lotteryId})
+        ];
 
-        
-        if(!lottery){
-            return sendResponse(res,404,'Lottery not found')
+        const referrerHierarchy = await User.aggregate(pipeline);
+
+        const referrers = referrerHierarchy.length > 0 ? referrerHierarchy[0].referrers : [];
+        console.log(referrers);
+
+        const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
+
+
+        if (!lottery) {
+            return sendResponse(res, 404, 'Lottery not found')
         }
-        
 
         let ticketNumbers = ticketIds.map(ids => parseInt(ids.join(''), 10));
-
-        // create array of purchased history objects locally
-        let purchaseHistory = ticketNumbers.map(ticketNumber => {
+        let purchaseHistories = ticketNumbers.map(ticketNumber => {
             return {
                 userId,
                 ticketId: ticketNumber,
@@ -83,17 +82,67 @@ const createPurchaseHistory=async(req,res)=>{
             }
         });
 
-        console.log(purchaseHistory);
 
-        console.log(lottery.ticketPrice)
+        const commissionHistories = []
 
-        return sendResponse(res,200,true,'Purchase history created successfully',referrers)
+        for (let i = 0; i < referrers.length; i++) {
+            if (referrers[i].level == 0) continue
+            if (referrers[i].level > 7) break
+            for (let j = 0; j < ticketNumbers.length; j++) {
+                console.log("got here ticke")
+                const percentage = getPercentage(referrers[i].level)
+                const commissionAmount = (percentage / 100) * lottery.ticketPrice
+                commissionHistories.push({
+                    from: userId,
+                    to: referrers[i]._id,
+                    ticketId: ticketNumbers[j],
+                    lotteryId,
+                    percentage,
+                    transactionHash,
+                    amount: commissionAmount,
+                    level: referrers[i].level
+                })
+
+            }
+            console.log('outer loop')
+        }
+
+        console.log("got here")
+        const data = {
+            purchaseHistories,
+            commissionHistories
+        }
+
+        return sendResponse(res, 200, true, 'Purchase history created successfully', data)
 
     } catch (error) {
-        sendResponse(res,500,error.message)
+        sendResponse(res, 500, error.message)
     }
 }
 
-module.exports={
+// Level-1 : 10%
+// Level-2 : 5%
+// Level-3 : 3%
+// Level-4 : 2%
+// Level-5 : 1%
+// Level-6 : 1%
+// Level-7 : 1%
+// write a function that will return the percentage based on level
+
+const getPercentage = (level) => {
+    if (level === 1) {
+        return 10
+    } else if (level === 2) {
+        return 5
+    } else if (level === 3) {
+        return 3
+    } else if (level === 4) {
+        return 2
+    } else {
+        return 1
+    }
+}
+
+module.exports = {
     createPurchaseHistory
 }
