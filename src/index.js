@@ -16,13 +16,13 @@ db.once("open", () => {
 });
 
 
-// Define a route handler for the default home page
 app.get("/", (req, res) => {
   res.send("Hello, World!");
 });
+
 app.use("/api", apiRoutes);
 
-// Get the port from the environment variables or use 5000 as a default
+
 const port = process.env.PORT || 5000;
 
 // Start the server

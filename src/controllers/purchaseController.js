@@ -43,7 +43,7 @@ const createPurchaseHistory=async(req,res)=>{
         const userId=req.id
         
         const pipeline = [
-            { $match: { _id: userId } }, // Match the starting user
+            { $match: { _id: userId } },
             { $graphLookup: {
                 from: "users", 
                 startWith: "$_id",
@@ -62,6 +62,8 @@ const createPurchaseHistory=async(req,res)=>{
           console.log(referrers);
           
         const lottery = await lotterySchema.findOne({"lotteryID":lotteryId})
+
+        
         if(!lottery){
             return sendResponse(res,404,'Lottery not found')
         }
@@ -69,7 +71,19 @@ const createPurchaseHistory=async(req,res)=>{
 
         let ticketNumbers = ticketIds.map(ids => parseInt(ids.join(''), 10));
 
-        console.log(ticketNumbers);
+        // create array of purchased history objects locally
+        let purchaseHistory = ticketNumbers.map(ticketNumber => {
+            return {
+                userId,
+                ticketId: ticketNumber,
+                lotteryId,
+                ticketQuantity: 1,
+                transactionHash,
+                amount: lottery.ticketPrice
+            }
+        });
+
+        console.log(purchaseHistory);
 
         console.log(lottery.ticketPrice)
 
