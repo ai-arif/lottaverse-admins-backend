@@ -21,7 +21,8 @@ const commissionHistory = new mongoose.Schema({
     },
     ticketId: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     lotteryId:{
         type:Number,
@@ -33,7 +34,7 @@ const commissionHistory = new mongoose.Schema({
     },
     transactionHash:{
         type:String,
-        required:true
+        required:false
     },
     amount: {
         type: Number,

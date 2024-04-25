@@ -61,7 +61,9 @@ const createPurchaseHistory = async (req, res) => {
         const referrerHierarchy = await User.aggregate(pipeline);
 
         const referrers = referrerHierarchy.length > 0 ? referrerHierarchy[0].referrers : [];
-        console.log(referrers);
+        // get the user whose level is 0    
+
+        const currentUser= referrers.find(referrer => referrer.level === 0)
 
         const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
 
@@ -89,25 +91,28 @@ const createPurchaseHistory = async (req, res) => {
             if (referrers[i].level == 0) continue
             if (referrers[i].level > 7) break
             for (let j = 0; j < ticketNumbers.length; j++) {
-                console.log("got here ticke")
                 const percentage = getPercentage(referrers[i].level)
                 const commissionAmount = (percentage / 100) * lottery.ticketPrice
                 commissionHistories.push({
                     from: userId,
                     to: referrers[i]._id,
+                    fromAddress: currentUser.address,
+                    toAddress: referrers[i].address,
                     ticketId: ticketNumbers[j],
+                    transactionHash,
                     lotteryId,
                     percentage,
                     transactionHash,
                     amount: commissionAmount,
                     level: referrers[i].level
                 })
-
             }
-            console.log('outer loop')
         }
+        // insert purchase history, and commission history
+        await PurchaseHistory.insertMany(purchaseHistories)
+        await CommissionHistory.insertMany(commissionHistories)
 
-        console.log("got here")
+
         const data = {
             purchaseHistories,
             commissionHistories
