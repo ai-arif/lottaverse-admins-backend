@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const { getLeaderboard } = require("../controllers/leaderboardController");
 const verifyToken = require("../middleware/verifyToken");
+const {getCommissionHistory} = require('../controllers/commissionHistoryController');
 const {
   getUsersDetails,
   registerUser,
@@ -28,5 +29,6 @@ router.post("/createlottery", createLottery);
 router.get("/activelotteries", activeLotteries);
 
 router.post("/createpurchasehistory",verifyToken,createPurchaseHistory)
+router.get("/commissionhistory",verifyToken,getCommissionHistory)
 
 module.exports = router;
