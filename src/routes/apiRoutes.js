@@ -13,7 +13,8 @@ const {
   getReferralLevelCount,
 } = require("../controllers/referralController");
 const {
-  createPurchaseHistory
+  createPurchaseHistory,
+  getPurchaseHistory
 } = require('../controllers/purchaseController')
 
 const { createLottery,activeLotteries } = require("../controllers/createLottery");
@@ -29,6 +30,7 @@ router.post("/createlottery", createLottery);
 router.get("/activelotteries", activeLotteries);
 
 router.post("/createpurchasehistory",verifyToken,createPurchaseHistory)
+router.get("/purchasehistory",verifyToken,getPurchaseHistory)
 router.get("/commissionhistory",verifyToken,getCommissionHistory)
 
-module.exports = router;
+module.exports = router; 

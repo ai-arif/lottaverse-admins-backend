@@ -15,6 +15,9 @@ const purchaseHistorySchema = new mongoose.Schema({
         type:Number,
         required:true
     },
+    lotteryPackage:{
+        type:String,
+    },
     ticketQuantity: {
         type: Number,
         required: true

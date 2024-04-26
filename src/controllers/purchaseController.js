@@ -148,6 +148,19 @@ const getPercentage = (level) => {
     }
 }
 
+// get the purchase history of a user
+const getPurchaseHistory = async (req, res) => {
+    try {
+        const userId = req.id
+        const purchaseHistories = await PurchaseHistory.find({ userId }).sort({ createdAt: -1 })
+        return sendResponse(res, 200, true, 'Purchase history fetched successfully', purchaseHistories)
+    } catch (error) {
+        sendResponse(res, 500, error.message)
+    }
+}
+
+
 module.exports = {
-    createPurchaseHistory
+    createPurchaseHistory,
+    getPurchaseHistory
 }
