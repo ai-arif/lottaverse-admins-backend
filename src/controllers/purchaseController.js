@@ -66,6 +66,11 @@ const createPurchaseHistory = async (req, res) => {
         const currentUser= referrers.find(referrer => referrer.level === 0)
 
         const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
+        let lotalPaid=lottery?.ticketPrice * ticketIds?.length 
+        // add the amount with payout
+        // const upadteUser= await User.updateOne({
+
+        // })
 
 
         if (!lottery) {
@@ -74,10 +79,12 @@ const createPurchaseHistory = async (req, res) => {
 
         let ticketNumbers = ticketIds.map(ids => parseInt(ids.join(''), 10));
         let purchaseHistories = ticketNumbers.map(ticketNumber => {
+
             return {
                 userId,
                 ticketId: ticketNumber,
                 lotteryId,
+                lotteryPackage: lottery.lotteryType,
                 ticketQuantity: 1,
                 transactionHash,
                 amount: lottery.ticketPrice
