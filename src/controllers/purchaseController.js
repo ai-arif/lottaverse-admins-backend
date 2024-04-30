@@ -66,11 +66,12 @@ const createPurchaseHistory = async (req, res) => {
         const currentUser= referrers.find(referrer => referrer.level === 0)
 
         const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
-        let lotalPaid=lottery?.ticketPrice * ticketIds?.length 
-        // add the amount with payout
-        // const upadteUser= await User.updateOne({
-
-        // })
+        // totalPurchased field of lottery will be increased by ticketIds.length
+        lotterySchema.findOneAndUpdate({ "lotteryID": lotteryId }, { $inc: { totalPurchased: ticketIds.length } })
+        let totalPaid=lottery?.ticketPrice * ticketIds?.length 
+        // also increase the user expiryDate field to next 1 month, and add totalPaid with user payout
+        await User.findByIdAndUpdate(userId, { $inc: { payout: totalPaid }, expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) })
+        
 
 
         if (!lottery) {
