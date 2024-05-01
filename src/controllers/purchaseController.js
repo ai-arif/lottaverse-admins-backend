@@ -67,10 +67,12 @@ const createPurchaseHistory = async (req, res) => {
 
         const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
         // totalPurchased field of lottery will be increased by ticketIds.length
-        lotterySchema.findOneAndUpdate({ "lotteryID": lotteryId }, { $inc: { totalPurchased: ticketIds.length } })
+        await lotterySchema.findOneAndUpdate({ "lotteryID": lotteryId }, { $inc: { totalPurchased: ticketIds.length } })
+
         let totalPaid=lottery?.ticketPrice * ticketIds?.length 
         // also increase the user expiryDate field to next 1 month, and add totalPaid with user payout
-        await User.findByIdAndUpdate(userId, { $inc: { payout: totalPaid }, expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) })
+        
+        await User.findByIdAndUpdate(userId, { $inc: { payout: totalPaid, totalTickets: ticketIds.length }, expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) })
         
 
 

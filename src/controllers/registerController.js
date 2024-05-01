@@ -47,7 +47,7 @@ exports.registerUser = async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user._id }, "nonacademryorg", {
-      expiresIn: "10d",
+      expiresIn: "30d",
     });
 
     sendResponse(res, 200, true, "User registered successfully", { token });
