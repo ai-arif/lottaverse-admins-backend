@@ -122,10 +122,19 @@ const createPurchaseHistory = async (req, res) => {
         await PurchaseHistory.insertMany(purchaseHistories)
         await CommissionHistory.insertMany(commissionHistories)
 
-        // add commission amount to referrers earnings
         for (let i = 0; i < commissionHistories.length; i++) {
-            await User.findByIdAndUpdate(commissionHistories[i].to, { $inc: { earnings: commissionHistories[i].amount } })
+            // Incrementing both earnings and commissionEarnings fields of user
+            await User.findByIdAndUpdate(
+                commissionHistories[i].to,
+                { 
+                    $inc: { 
+                        earnings: commissionHistories[i].amount,
+                        commissionEarnings: commissionHistories[i].amount 
+                    } 
+                }
+            );
         }
+        
 
 
         const data = {
