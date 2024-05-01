@@ -8,7 +8,7 @@ exports.getLeaderboard = async (req, res) => {
         // Modify address field to show only first 4 and last 4 characters
         leaderboard = leaderboard.map(user => ({
             ...user.toObject(),
-            address: user.address.substring(0, 4) + '********' + user.address.substring(user.address.length - 4)
+            address: user.address.substring(0, 4) + '******' + user.address.substring(user.address.length - 4)
         }));
 
         sendResponse(res, 200, true, 'Leaderboard fetched successfully', leaderboard);

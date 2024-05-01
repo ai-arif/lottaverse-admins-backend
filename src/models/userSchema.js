@@ -11,6 +11,26 @@ const userSchema = new mongoose.Schema({
         required: true,
         default: 0
     },
+    commissionEarnings: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    jackpotEarnings: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    leaderboardEarnings: {
+        type: Number,
+        required: true,
+        default: 0
+    },
+    founder: {
+        type: Number,
+        required: true,
+        default: 0
+    },
     transactions: {
         type: Array,
         required: true,

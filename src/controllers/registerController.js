@@ -16,13 +16,14 @@ exports.registerUser = async (req, res) => {
     }
 
     const referralId = generateReferralId();
-    const referralLinkForUser = generateReferralLink(referralId);
+    const referralLinkForUser = generateReferralLink(address);
 
     let user = await User.findOne({ address });
 
     if (!user) {
       if (parentReferralId) {
-        const referredBy = await User.findOne({ referralId: parentReferralId });
+        // const referredBy = await User.findOne({ referralId: parentReferralId });
+        const referredBy = await User.findOne({ address: parentReferralId });
         if (referredBy) {
           user = await User.create({
             address,
