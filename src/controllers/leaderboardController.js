@@ -4,8 +4,6 @@ const sendResponse = require('../utils/sendResponse');
 exports.getLeaderboard = async (req, res) => {
     try {
         let leaderboard = await User.find().select(['_id','address','payout','createdAt','referralId','totalTickets']).sort({ payout: -1 }).limit(30);
-
-        // Modify address field to show only first 4 and last 4 characters
         leaderboard = leaderboard.map(user => ({
             ...user.toObject(),
             address: user.address.substring(0, 4) + '******' + user.address.substring(user.address.length - 4)
