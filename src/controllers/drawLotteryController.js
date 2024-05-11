@@ -15,13 +15,11 @@ const drawLottery=async(req,res)=>{
         const {lotteryId}=req.body
         const lottery=await LotterySchema.findOne({lotteryID:lotteryId})
         const ticketPrice= lottery.ticketPrice;
-        console.log('ticketPrice',ticketPrice)
         
-        
-        const purchaseHistory=await PurchaseHistory.find({lotteryId})
+        const purchaseHistory=await PurchaseHistory.find({lotteryId}).populate('userId')
         // calculate amount 5% of the total amount of the lottery
         const totalAmount=purchaseHistory.reduce((acc,curr)=>acc+curr.amount,0)
-        console.log('totalAmount',totalAmount)
+        
         const fivePercent=totalAmount*0.05
         const top30Users=await User.find().sort({payout:-1}).limit(30)
         // divide the 5% amount among the top 30 users
@@ -30,24 +28,31 @@ const drawLottery=async(req,res)=>{
         // 
         
         const randomIndex=Math.floor(Math.random()*purchaseHistory.length)
-        const secondPrizeWinner=purchaseHistory[randomIndex].userId
-        // randomly chose third prize winner between the users who bought the lottery use purchaseHistory
+        
+        const secondPrizeWinner=purchaseHistory[randomIndex].userId?.address
+        
         const randomIndex2=Math.floor(Math.random()*purchaseHistory.length)
-        const thirdPrizeWinner=purchaseHistory[randomIndex2].userId
+        const thirdPrizeWinner=purchaseHistory[randomIndex2].userId?.address
         // randomly chose 1000 users, who bought the lottery
         let randomUsers=[]
         let length=purchaseHistory.length > 1000 ? 1000 : purchaseHistory.length
         for(let i=0;i<length;i++){
             const randomIndex=Math.floor(Math.random()*purchaseHistory.length)
-            randomUsers.push(purchaseHistory[randomIndex].userId)
+            randomUsers.push(purchaseHistory[randomIndex]?.userId?.address)
         }
         
         // make random users unique
         randomUsers=Array.from(new Set(randomUsers))
+        // get the second winner amount
+        const secondWinnerAmount=getSecondWinnerAmount(lottery.lotteryType)
+        const thirdWinnerAmount=getThirdWinnerAmount(lottery.lotteryType)
+        const randomWinnerAmount=getRandomWinnerAmount(lottery.lotteryType)
 
-        // get the first prize winner
         const data={
             fivePercentOfTotalPerUser,
+            secondWinnerAmount,
+            thirdWinnerAmount,
+            randomWinnerAmount,
             top30Users,
             firstPrizeWinner:top30Users[0],
             secondPrizeWinner,
@@ -63,6 +68,35 @@ const drawLottery=async(req,res)=>{
         sendResponse(res,500,false,error.message, error.message)
         
     }
+}
+
+// write a function that will take package name and return the second winner amount in wei
+// package name is a string
+const getSecondWinnerAmount=(packageName)=>{
+    const packageAmount={
+        'easy':322732,
+        'super':484098,
+        'superx':968197
+    }
+    return packageAmount[packageName]
+}
+
+const getThirdWinnerAmount=(packageName)=>{
+    const packageAmount={
+        'easy':96820,
+        'super':161366,
+        'superx':322732
+    }
+    return packageAmount[packageName]
+}
+
+const getRandomWinnerAmount=(packageName)=>{
+    const packageAmount={
+        'easy':3227.16,
+        'super':4840.74,
+        'superx':9681.48
+    }
+    return packageAmount[packageName]
 }
 
 module.exports={
