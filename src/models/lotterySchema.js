@@ -5,7 +5,7 @@ const lotterySchema = new mongoose.Schema(
     lotteryOperator: String,
     ticketPrice: Number,
     maxTickets: Number,
-    operatorCommissionPercentage: String,
+    operatorCommissionPercentage: Number,
     expiration: Number,
     lotteryID: Number,
     totalPurchased: Number,

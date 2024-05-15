@@ -39,12 +39,12 @@ const createLottery = async (req, res) => {
 
     const unixEpochTime = moment(expiry).unix();
 
-    const ticketprice = Number(ethers.parseEther(ticketPrice));
-    const firstprize = Number(ethers.parseEther(firstPrize.toString()));
-    const secondprize = Number(ethers.parseEther(secondPrize.toString()));
-    const thirdprize = Number(ethers.parseEther(thirdPrize.toString()));
-    const fourthprize = Number(ethers.parseEther(fourthPrize.toString()));
-    const otherprize = Number(ethers.parseEther(otherPrizes.toString()));
+    const ticketprice = Number(ethers.parseUnits(ticketPrice).toString(), 6);
+    const firstprize = Number(ethers.parseUnits(firstPrize.toString(), 6));
+    const secondprize = Number(ethers.parseUnits(secondPrize.toString(), 6));
+    const thirdprize = Number(ethers.parseUnits(thirdPrize.toString(), 6));
+    const fourthprize = Number(ethers.parseUnits(fourthPrize.toString(), 6));
+    const otherprize = Number(ethers.parseUnits(otherPrizes.toString(), 6));
     console.log("THis is ticket prize", ticketprice);
     const prizes = {
       firstPrize: firstprize,
