@@ -15,7 +15,8 @@ const {
 } = require("../controllers/referralController");
 const {
   createPurchaseHistory,
-  getPurchaseHistory
+  getPurchaseHistory,
+  prePurchase
 } = require('../controllers/purchaseController')
 
 const { createLottery,activeLotteries } = require("../controllers/createLottery");
@@ -32,6 +33,7 @@ router.get("/activelotteries", activeLotteries);
 
 router.post("/createpurchasehistory",verifyToken,createPurchaseHistory)
 router.get("/purchasehistory",verifyToken,getPurchaseHistory)
+router.post("/prepurchase",verifyToken,prePurchase)
 router.get("/commissionhistory",verifyToken,getCommissionHistory)
 
 router.post("/drawlottery",drawLottery)
