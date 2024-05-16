@@ -16,19 +16,17 @@ const drawLottery=async(req,res)=>{
         const lottery=await LotterySchema.findOne({lotteryID:lotteryId})
         const ticketPrice= lottery.ticketPrice;
         const premiumUsers=await User.find({userType:"premium"})
-        
         const purchaseHistory=await PurchaseHistory.find({lotteryId}).populate('userId')
-        // calculate amount 5% of the total amount of the lottery
-        const totalAmount=purchaseHistory.reduce((acc,curr)=>acc+curr.amount,0)
-        
+        if (!purchaseHistory || purchaseHistory.length === 0) {
+            return sendResponse(res, 404, false, 'No purchase history found for this lottery', null);
+        }
+        const totalAmount=purchaseHistory.reduce((acc,curr)=>acc+curr.amount,0)        
         const fivePercent=totalAmount*0.05
-        // divide the 5% amount among the premium users
         const fivePercentPerPremiumUser=fivePercent/premiumUsers.length
         const top30Users=await User.find().sort({payout:-1}).limit(30)
-        // divide the 5% amount among the top 30 users
         const fivePercentOfTotalPerUser=fivePercent/30
         
-        // 
+        
         
         const randomIndex=Math.floor(Math.random()*purchaseHistory.length)
         
@@ -36,7 +34,7 @@ const drawLottery=async(req,res)=>{
         
         const randomIndex2=Math.floor(Math.random()*purchaseHistory.length)
         const thirdPrizeWinner=purchaseHistory[randomIndex2].userId?.address
-        // randomly chose 1000 users, who bought the lottery
+        
         let randomUsers=[]
         let length=purchaseHistory.length > 1000 ? 1000 : purchaseHistory.length
         for(let i=0;i<length;i++){
