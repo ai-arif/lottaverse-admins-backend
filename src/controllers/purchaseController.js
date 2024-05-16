@@ -178,6 +178,7 @@ const prePurchase = async (req, res) => {
     const currentUser= referrers.find(referrer => referrer.level === 0)
 
     const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
+    
     await lotterySchema.findOneAndUpdate({ "lotteryID": lotteryId }, { $inc: { totalPurchased: ticketIds.length } })
 
     let totalPaid=lottery?.ticketPrice * ticketIds?.length 
@@ -206,7 +207,7 @@ const prePurchase = async (req, res) => {
 
 
     const commissionHistories = []
-    console.log(referrers)
+    
     const referAddress=[]
     const amount=[]
 
