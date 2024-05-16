@@ -24,6 +24,8 @@ app.use("/api", apiRoutes);
 
 
 const port = process.env.PORT || 5000;
+// const port = 6000;
+
 
 // Start the server
 app.listen(port, () => {
