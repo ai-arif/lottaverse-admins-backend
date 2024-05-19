@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const { getLeaderboard } = require("../controllers/leaderboardController");
 const verifyToken = require("../middleware/verifyToken");
-const {drawLottery} = require("../controllers/drawLotteryController");
+const {createLotteryDraw,getDrawHistory} = require("../controllers/drawLotteryController");
 const {getCommissionHistory} = require('../controllers/commissionHistoryController');
 const {
   getUsersDetails,
@@ -36,6 +36,7 @@ router.get("/purchasehistory",verifyToken,getPurchaseHistory)
 router.post("/prepurchase",verifyToken,prePurchase)
 router.get("/commissionhistory",verifyToken,getCommissionHistory)
 
-router.post("/drawlottery",drawLottery)
+router.post("/drawlottery",createLotteryDraw)
+router.get("/drawhistory/:lotteryId",getDrawHistory)
 
 module.exports = router; 

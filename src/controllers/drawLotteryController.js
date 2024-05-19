@@ -1,138 +1,125 @@
-const LotterySchema=require('../models/lotterySchema')
-const PurchaseHistory = require('../models/puchaseHistorySchema')
-const sendResponse = require('../utils/sendResponse')
-const User = require('../models/userSchema')
-const Ticket = require('../models/ticketsSchema')
-const CommissionHistory = require('../models/commissionHistory')
+const LotteryDraw = require('../models/lotteryDrawSchema');
+const User = require('../models/userSchema');
+const PurchaseHistory = require('../models/puchaseHistorySchema');
+const Lottery = require('../models/lotterySchema');
+const sendResponse = require('../utils/sendResponse');
 
-// top 30 leaders of the leader
-// first prize winner ke msg dibo
-// 2nd prize winner ke
-// 3rd prize winner ke
-// 1000 random users 
-const drawLottery=async(req,res)=>{
+function getDateBasedRandomIndex(max) {
+    const now = new Date();
+    return now.getMilliseconds() % max;
+}
+
+async function createLotteryDraw(lotteryId) {
     try {
-        const {lotteryId}=req.body
-        
-        const lottery=await LotterySchema.findOne({lotteryID:lotteryId})
-        if(!lottery){
-            return sendResponse(res,404,false,'Lottery not found',null)
+        // Check if the lottery exists and is active
+        const lottery = await Lottery.findOne({ lotteryID: lotteryId });
+        if (!lottery) {
+            throw new Error("Lottery not found.");
         }
-        if(lottery.hasDraw){
-            return sendResponse(res,400,false,'Lottery already drawn',null)
-        }
-        const expiration=lottery.expiration
-        const currentTime=new Date().getTime()
-        if(currentTime > expiration){
-            return sendResponse(res,400,false,'Lottery expired',null)
+        if (!lottery.isActive) {
+            throw new Error("Lottery is not active.");
         }
 
-
-        const ticketPrice= lottery.ticketPrice;
-        const premiumUsers=await User.find({userType:"premium"})
-        const purchaseHistory=await PurchaseHistory.find({lotteryId}).populate('userId')
-        if (!purchaseHistory || purchaseHistory.length === 0) {
-            return sendResponse(res, 404, false, 'No purchase history found for this lottery', null);
-        }
-        const totalAmount=purchaseHistory.reduce((acc,curr)=>acc+curr.amount,0)        
-        const fivePercent=totalAmount*0.05
-        const fivePercentPerPremiumUser=fivePercent/premiumUsers.length
-        const top30Users=await User.find().sort({payout:-1}).limit(30)
-        const fivePercentOfTotalPerUser=fivePercent/30
-        
-        
-        
-        const randomIndex=Math.floor(Math.random()*purchaseHistory.length)
-        
-        const secondPrizeWinner=purchaseHistory[randomIndex].userId?.address
-        
-        const randomIndex2=Math.floor(Math.random()*purchaseHistory.length)
-        const thirdPrizeWinner=purchaseHistory[randomIndex2].userId?.address
-        
-        let randomUsers=[]
-        let length=purchaseHistory.length > 1000 ? 1000 : purchaseHistory.length
-        for(let i=0;i<length;i++){
-            const randomIndex=Math.floor(Math.random()*purchaseHistory.length)
-            randomUsers.push(purchaseHistory[randomIndex]?.userId?.address)
-        }
-        
-        // make random users unique
-        randomUsers=Array.from(new Set(randomUsers))
-        // get the second winner amount
-        const secondWinnerAmount=getSecondWinnerAmount(lottery.lotteryType)
-        const thirdWinnerAmount=getThirdWinnerAmount(lottery.lotteryType)
-        const randomWinnerAmount=getRandomWinnerAmount(lottery.lotteryType)
-
-        const data={
-            fivePercentOfTotalPerUser,
-            secondWinnerAmount,
-            thirdWinnerAmount,
-            randomWinnerAmount,
-            fivePercentPerPremiumUser,
-            premiumUsers,
-            top30Users,
-            firstPrizeWinner:top30Users[0],
-            secondPrizeWinner,
-            thirdPrizeWinner,
-            randomUsers,
-            
+        // Check if the lottery has already been drawn
+        const existingDraw = await LotteryDraw.findOne({ lotteryId });
+       
+        if (existingDraw) {
+            throw new Error("Lottery has already been drawn.");
         }
 
-        // send the data to the users
-        sendResponse(res,200,true,'Lottery drawn successfully',data)
+        // Find top 30 leaders based on payout
+        const leaders = await User.find().sort({ payout: -1 }).limit(30);
 
+        // Find all purchase histories for the specified lottery
+        const purchaseHistories = await PurchaseHistory.find({ lotteryId }).populate('userId');
+
+        // Choose second and third winners randomly from the purchaseHistories using date-based random index
+        let secondWinner = null;
+        let thirdWinner = null;
+        if (purchaseHistories.length > 0) {
+            const secondWinnerIndex = getDateBasedRandomIndex(purchaseHistories.length);
+            secondWinner = purchaseHistories[secondWinnerIndex].userId;
+
+            if (purchaseHistories.length > 1) {
+                let thirdWinnerIndex;
+                do {
+                    thirdWinnerIndex = getDateBasedRandomIndex(purchaseHistories.length);
+                } while (thirdWinnerIndex === secondWinnerIndex);
+                thirdWinner = purchaseHistories[thirdWinnerIndex].userId;
+            }
+        }
+
+        // Find premium users
+        const premiumUsers = await User.find({ userType: 'premium' });
+
+        // Find 1000 unique users who have bought at least one ticket for the lottery
+        const randomWinnersAggregation = await PurchaseHistory.aggregate([
+            { $match: { lotteryId: mongoose.Types.ObjectId(lotteryId) } },
+            { $group: { _id: '$userId' } },
+            { $sample: { size: 1000 } }
+        ]);
+
+        const randomWinners = randomWinnersAggregation.map(item => item._id);
+
+        // Create a new lottery draw document
+        const lotteryDraw = new LotteryDraw({
+            lotteryId,
+            leaders: leaders.map(leader => ({
+                userId: leader._id,
+                payout: leader.payout,
+                percentage: null,
+                amount: null
+            })),
+            secondWinner: secondWinner ? {
+                userId: secondWinner._id,
+                percentage: null,
+                amount: null
+            } : null,
+            thirdWinner: thirdWinner ? {
+                userId: thirdWinner._id,
+                percentage: null,
+                amount: null
+            } : null,
+            premiumUsers: premiumUsers.map(user => ({
+                userId: user._id,
+                percentage: null,
+                amount: null
+            })),
+            randomWinners: randomWinners.map(userId => ({
+                userId: userId,
+                percentage: null,
+                amount: null
+            }))
+        });
+
+        await lotteryDraw.save();
+        return lotteryDraw;
     } catch (error) {
-        sendResponse(res,500,false,error.message, error.message)
-        
+        console.error("Error creating lottery draw:", error);
+        throw error;
     }
 }
 
-const performDraw=async(req,res)=>{
-    const {lotteryId}=req.body
+const getDrawHistory = async (req, res) => {
     try {
-        const lottery=await LotterySchema.findOne({lotteryID:lotteryId})
-        if(!lottery){
-            return sendResponse(res,404,false,'Lottery not found',null)
+        const { lotteryId } = req.params;
+        // check if the lottery exists, and hasDraw is true
+        const lottery = await Lottery.findOne({ lotteryId });
+        if (!lottery) {
+            return sendResponse(res, 404, 'Lottery not found');
         }
-        if(lottery.hasDraw){
-            return sendResponse(res,400,false,'Lottery already drawn',null)
+        if (!lottery.hasDraw) {
+            return sendResponse(res, 404, 'Lottery has not been drawn yet');
         }
-        // use 
+        const drawHistory = await LotteryDraw.find({ lotteryId }).populate('leaders.userId').populate('secondWinner.userId').populate('thirdWinner.userId').populate('premiumUsers.userId').populate('randomWinners.userId');
+        return sendResponse(res, 200, 'Draw history fetched successfully', drawHistory);
     }
     catch (error) {
-        sendResponse(res,500,false,error.message, error.message)
+        return sendResponse(res, 500, error.message);
     }
 }
 
-// write a function that will take package name and return the second winner amount in wei
-// package name is a string
-const getSecondWinnerAmount=(packageName)=>{
-    const packageAmount={
-        'easy':322732,
-        'super':484098,
-        'superx':968197
-    }
-    return packageAmount[packageName]
-}
-
-const getThirdWinnerAmount=(packageName)=>{
-    const packageAmount={
-        'easy':96820,
-        'super':161366,
-        'superx':322732
-    }
-    return packageAmount[packageName]
-}
-
-const getRandomWinnerAmount=(packageName)=>{
-    const packageAmount={
-        'easy':3227.16,
-        'super':4840.74,
-        'superx':9681.48
-    }
-    return packageAmount[packageName]
-}
-
-module.exports={
-    drawLottery
-}
+module.exports = {
+    createLotteryDraw,
+    getDrawHistory
+};
