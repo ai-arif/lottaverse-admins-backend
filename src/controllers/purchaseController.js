@@ -37,11 +37,16 @@ const createPurchaseHistory = async (req, res) => {
         await lotterySchema.findOneAndUpdate({ "lotteryID": lotteryId }, { $inc: { totalPurchased: ticketIds.length } })
 
         let totalPaid=lottery?.ticketPrice * ticketIds?.length 
-        // also increase the user expiryDate field to next 1 month, and add totalPaid with user payout
-        
-        await User.findByIdAndUpdate(userId, { $inc: { payout: totalPaid, totalTickets: ticketIds.length }, expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) })
-        
-
+        console.log("totalPaid",totalPaid)
+        console.log("ticket id length", ticketIds.length)
+        // await User.findByIdAndUpdate(userId, { $inc: { payout: totalPaid, totalTickets: ticketIds.length }, expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) })
+        await User.findByIdAndUpdate(
+            userId,
+            {
+                $inc: { payout: totalPaid, totalTickets: ticketIds.length },
+                expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            }
+        );
 
         if (!lottery) {
             return sendResponse(res, 404, 'Lottery not found')
@@ -181,10 +186,6 @@ const prePurchase = async (req, res) => {
     
     await lotterySchema.findOneAndUpdate({ "lotteryID": lotteryId }, { $inc: { totalPurchased: ticketIds.length } })
 
-    let totalPaid=lottery?.ticketPrice * ticketIds?.length 
-    
-    await User.findByIdAndUpdate(userId, { $inc: { payout: totalPaid, totalTickets: ticketIds.length }, expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) })
-    
 
 
     if (!lottery) {
