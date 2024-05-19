@@ -9,7 +9,8 @@ const purchaseHistorySchema = new mongoose.Schema({
     ticketId: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        trim: true
     },
     lotteryId:{
         type:Number,
@@ -20,7 +21,9 @@ const purchaseHistorySchema = new mongoose.Schema({
     },
     ticketQuantity: {
         type: Number,
-        required: true
+        required: true,
+        min: 1,
+        default: 1
     },
     transactionHash:{
         type:String,
@@ -28,7 +31,8 @@ const purchaseHistorySchema = new mongoose.Schema({
     },
     amount: {
         type: Number,
-        required: true
+        required: true,
+        min: 0
     }
 }, { timestamps: true });
 

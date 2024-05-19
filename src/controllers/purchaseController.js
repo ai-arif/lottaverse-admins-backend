@@ -236,6 +236,7 @@ const prePurchase = async (req, res) => {
         }
     }
     
+    
     return sendResponse(res, 200, true, 'Purchase history created successfully', {referAddress,amount, purchaseHistories,commissionHistories})
 
 

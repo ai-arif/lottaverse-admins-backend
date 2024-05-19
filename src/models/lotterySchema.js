@@ -7,8 +7,17 @@ const lotterySchema = new mongoose.Schema(
     maxTickets: Number,
     operatorCommissionPercentage: Number,
     expiration: Number,
-    lotteryID: Number,
-    totalPurchased: Number,
+    lotteryID: {
+      type: Number,
+      required: true,
+      unique: true
+    },
+    totalPurchased: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0
+    },
     lotteryType: String,
     prizes: {
       firstPrize: Number,
@@ -19,7 +28,11 @@ const lotterySchema = new mongoose.Schema(
     },
     transactionHash: String,
     isActive: Boolean,
-    hasDraw: Boolean,
+    hasDraw: {
+      type: Boolean,
+      required: true,
+      default: false
+    }
   },
   { timestamps: true }
 );

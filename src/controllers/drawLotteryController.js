@@ -13,7 +13,21 @@ const CommissionHistory = require('../models/commissionHistory')
 const drawLottery=async(req,res)=>{
     try {
         const {lotteryId}=req.body
+        
         const lottery=await LotterySchema.findOne({lotteryID:lotteryId})
+        if(!lottery){
+            return sendResponse(res,404,false,'Lottery not found',null)
+        }
+        if(lottery.hasDraw){
+            return sendResponse(res,400,false,'Lottery already drawn',null)
+        }
+        const expiration=lottery.expiration
+        const currentTime=new Date().getTime()
+        if(currentTime > expiration){
+            return sendResponse(res,400,false,'Lottery expired',null)
+        }
+
+
         const ticketPrice= lottery.ticketPrice;
         const premiumUsers=await User.find({userType:"premium"})
         const purchaseHistory=await PurchaseHistory.find({lotteryId}).populate('userId')
@@ -70,6 +84,23 @@ const drawLottery=async(req,res)=>{
     } catch (error) {
         sendResponse(res,500,false,error.message, error.message)
         
+    }
+}
+
+const performDraw=async(req,res)=>{
+    const {lotteryId}=req.body
+    try {
+        const lottery=await LotterySchema.findOne({lotteryID:lotteryId})
+        if(!lottery){
+            return sendResponse(res,404,false,'Lottery not found',null)
+        }
+        if(lottery.hasDraw){
+            return sendResponse(res,400,false,'Lottery already drawn',null)
+        }
+        // use 
+    }
+    catch (error) {
+        sendResponse(res,500,false,error.message, error.message)
     }
 }
 

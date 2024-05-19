@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 // Define the schema for lottery draw history
 const drawHistorySchema = new mongoose.Schema({
+    lottery: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Lottery'
+    },
     lotteryID: {
         type: Number,
         required: true
@@ -9,7 +13,7 @@ const drawHistorySchema = new mongoose.Schema({
     winners: {
         firstPrize: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User' // Reference to the User model
+            ref: 'User'
         },
         secondPrize: {
             type: mongoose.Schema.Types.ObjectId,
@@ -19,6 +23,10 @@ const drawHistorySchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
         },
+        top30Leaders: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }],
         randomUsers: [{
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'

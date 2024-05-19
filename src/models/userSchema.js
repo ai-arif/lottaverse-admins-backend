@@ -9,22 +9,26 @@ const userSchema = new mongoose.Schema({
     earnings: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        min: 0
     },
     commissionEarnings: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        min: 0
     },
     jackpotEarnings: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        min: 0
     },
     leaderboardEarnings: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        min: 0
     },
     founder: {
         type: Number,
@@ -44,7 +48,8 @@ const userSchema = new mongoose.Schema({
     payout: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        min: 0
     },
     referralId: {
         type: String,
@@ -71,7 +76,8 @@ const userSchema = new mongoose.Schema({
     totalTickets: {
         type: Number,
         required: true,
-        default: 0
+        default: 0,
+        min: 0
     },
     expiryDate: {
         type: Date,
