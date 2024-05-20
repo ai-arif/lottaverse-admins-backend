@@ -1,9 +1,12 @@
 const mongoose = require('mongoose');
 
 const lotteryDrawSchema = new mongoose.Schema({
-    lotteryId: {
+    lottery: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Lottery',
+    },
+    lotteryId: {
+        type: Number,
         required: true
     },
     drawDate: {
