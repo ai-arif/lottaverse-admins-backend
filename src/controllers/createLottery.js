@@ -32,7 +32,7 @@ const createLottery = async (req, res) => {
       firstPrize,
       secondPrize,
       thirdPrize,
-      fourthPrize,
+      // fourthPrize,
       otherPrizes,
       transactionHash,
     } = req.body;
@@ -43,14 +43,14 @@ const createLottery = async (req, res) => {
     const firstprize = Number(ethers.parseUnits(firstPrize.toString(), 6));
     const secondprize = Number(ethers.parseUnits(secondPrize.toString(), 6));
     const thirdprize = Number(ethers.parseUnits(thirdPrize.toString(), 6));
-    const fourthprize = Number(ethers.parseUnits(fourthPrize.toString(), 6));
+    // const fourthprize = Number(ethers.parseUnits(fourthPrize.toString(), 6));
     const otherprize = Number(ethers.parseUnits(otherPrizes.toString(), 6));
     console.log("THis is ticket prize", ticketprice);
     const prizes = {
       firstPrize: firstprize,
       secondPrize: secondprize,
       thirdPrize: thirdprize,
-      fourthPrize: fourthprize,
+      // fourthPrize: fourthprize,
       otherPrizes: otherprize,
     };
 
