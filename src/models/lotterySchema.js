@@ -18,6 +18,12 @@ const lotterySchema = new mongoose.Schema(
       default: 0,
       min: 0
     },
+    round: {
+      type: Number,
+      required: true,
+      default: 1,
+      min: 0
+    },
     lotteryType: String,
     prizes: {
       firstPrize: Number,
