@@ -102,7 +102,7 @@ const activeLotteries = async (req, res) => {
       isActive: true,
     })
       .sort({ createdAt: -1 })
-      .limit(3);
+      .limit(2);
 
     // Count lotteries for each round
     const roundZero = await Lottery.countDocuments({

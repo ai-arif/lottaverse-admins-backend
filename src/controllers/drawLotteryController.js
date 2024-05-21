@@ -118,8 +118,11 @@ const getDrawHistory = async (req, res) => {
         if (!lottery.hasDraw) {
             return sendResponse(res, 404,false, 'Lottery has not been drawn yet');
         }
-        const drawHistory = await LotteryDraw.find({ lotteryId }).populate('leaders.userId').populate('secondWinner.userId').populate('thirdWinner.userId').populate('premiumUsers.userId').populate('randomWinners.userId');
-        return sendResponse(res, 200, 'Draw history fetched successfully', drawHistory);
+        const drawHistory = await LotteryDraw.findOne({ lotteryId }).populate('leaders.userId').populate('secondWinner.userId').populate('thirdWinner.userId').populate('premiumUsers.userId').populate('randomWinners.userId');
+        return sendResponse(res, 200,true, 'Draw history fetched successfully', {
+            drawHistory,
+            lottery
+        });
     }
     catch (error) {
         return sendResponse(res, 500, error.message);

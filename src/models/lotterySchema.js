@@ -23,7 +23,7 @@ const lotterySchema = new mongoose.Schema(
       firstPrize: Number,
       secondPrize: Number,
       thirdPrize: Number,
-      fourthPrize: Number,
+      // fourthPrize: Number,
       otherPrizes: Number,
     },
     transactionHash: String,

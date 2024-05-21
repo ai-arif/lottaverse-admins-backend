@@ -2,6 +2,7 @@ const User = require("../models/userSchema");
 const jwt = require("jsonwebtoken");
 const sendResponse = require("../utils/sendResponse");
 
+
 exports.registerUser = async (req, res) => {
   try {
     const { address, referralLink } = req.body;
@@ -58,6 +59,14 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+// create a function same as register which will take array of addresses and register them
+
+
+// "0x3b95654cA3D98278e3be48BBA3694b0c6717dd02",
+// "0x400A39935695ab99796f7818c98Ac13E3C35910C",
+// "0xd916B8093A34997DA5B7E59b129784017e1C58dA",
+// "0xD7103B12527659C083Abc2bBf1f17D849EF26af9",
+// "0x2c85014D0A0C5732f9942302677D2fD10D1764A7",
 // getUsersDetails
 exports.getUsersDetails = async (req, res) => {
   try {
