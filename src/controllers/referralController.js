@@ -22,10 +22,23 @@ exports.getReferralHierarchy = async (req, res) => {
     }
 };
 
+function formatAddress(address) {
+    // Check if the address is long enough
+    if (address.length <= 6) {
+      return address; // No need to format if address is too short
+    }
+  
+    // Extract the first 3 and last 3 characters
+    const firstPart = address.slice(0, 4);
+    const lastPart = address.slice(-4);
+  
+    // Return the formatted address
+    return `${firstPart}***${lastPart}`;
+  }
 function buildHierarchy(user) {
     
     const hierarchy = {
-        name: user.referralId, // Assuming you want to use user's address as the name
+        name: formatAddress(user.address),
         children: []
     };
 

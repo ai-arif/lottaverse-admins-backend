@@ -68,7 +68,6 @@ const createLotteryDraw=async(req,res)=> {
 
         const randomWinners = randomWinnersAggregation.map(item => item._id);
 
-                // Create a new lottery draw document
         const lotteryDraw = new LotteryDraw({
             lotteryId,
             leaders: leaders.map(leader => ({

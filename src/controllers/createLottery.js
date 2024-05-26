@@ -1,4 +1,5 @@
 const Lottery = require("../models/lotterySchema");
+const PurchaseHistory = require('../models/puchaseHistorySchema');
 const sendResponse = require("../utils/sendResponse");
 const moment = require("moment");
 const ethers = require("ethers");
@@ -97,39 +98,63 @@ const createLottery = async (req, res) => {
 
 const activeLotteries = async (req, res) => {
   try {
-    // Get active lotteries with different lotteryId, last 3
-    const activeLotteries = await Lottery.find({
-      isActive: true,
-    })
+    
+    
+      // const activeLotteries = await Lottery.aggregate([
+      //   { $match: { isActive: true } }, 
+      //   { $sort: { createdAt: -1 } }, 
+      //   { $group: { _id: "$lotteryType", count: { $sum: 1 } } },
+      //   { $limit: 2 },
+      // ]);
+      const recentActiveLotteries = await Lottery.find({ isActive: true })
       .sort({ createdAt: -1 })
-      .limit(2);
+      .limit(2)
+      .lean(); // .lean() to get plain JavaScript objects
 
-    // Count lotteries for each round
-    const roundZero = await Lottery.countDocuments({
-      lotteryId: { $mod: [3, 0] },
+    if (recentActiveLotteries.length === 0) {
+      return res.status(200).json({ message: 'No active lotteries found.' });
+    }
+
+    // Extract the lottery types from the retrieved documents
+    const lotteryTypes = recentActiveLotteries.map(lottery => lottery.lotteryType);
+
+    // Step 2: Group and count the rounds based on the lotteryType of the retrieved lotteries
+    const roundCounts = await Lottery.aggregate([
+      { $match: { lotteryType: { $in: lotteryTypes } } },
+      { $group: { _id: "$lotteryType", count: { $sum: 1 } } }
+    ]);
+
+    // Combine the round counts with the lottery information
+    const activeLotteries = recentActiveLotteries.map(lottery => {
+      const roundCount = roundCounts.find(count => count._id === lottery.lotteryType);
+      return {
+        ...lottery,
+        roundCount: roundCount ? roundCount.count : 0
+      };
+    });
+    // get number of users who have bought tickets for the lottery
+    const lotteryIds = activeLotteries.map(lottery => lottery.lotteryID);
+    // userId  count the unique number of users who have bought tickets for the lottery
+    const userCounts = await PurchaseHistory.aggregate([
+      { $match: { lotteryId: { $in: lotteryIds } } },
+      { $group: { _id: { lotteryId: "$lotteryId", userId: "$userId" } } }, // Group by both lotteryId and userId to ensure uniqueness
+      { $group: { _id: "$_id.lotteryId", count: { $sum: 1 } } } // Count unique users per lottery
+    ]);
+
+    // Combine the user counts with the lottery information
+    activeLotteries.forEach(lottery => {
+      const userCount = userCounts.find(count => count._id === lottery.lotteryID);
+      lottery.userCount = userCount ? userCount.count : 0;
     });
 
-    const roundOne = await Lottery.countDocuments({
-      lotteryId: { $mod: [3, 1] },
-    });
 
-    const roundTwo = await Lottery.countDocuments({
-      lotteryId: { $mod: [3, 2] },
-    });
+    
+      
 
-    // Map through activeLotteries to add round numbers to each lottery
-    const lotteriesWithRound = activeLotteries.map((lottery) => {
-      if (lottery.lotteryId % 3 === 0) {
-        return { ...lottery.toObject(), round: roundZero };
-      } else if (lottery.lotteryId % 3 === 1) {
-        return { ...lottery.toObject(), round: roundOne };
-      } else {
-        return { ...lottery.toObject(), round: roundTwo };
-      }
-    });
+    
 
-    // Send response with lotteries including round numbers
-    sendResponse(res, 200, true, "Active lotteries", lotteriesWithRound);
+  
+    sendResponse(res, 200, true, "Active lotteries", activeLotteries);
   } catch (error) {
     sendResponse(res, 500, false, error.message, error.message);
   }
