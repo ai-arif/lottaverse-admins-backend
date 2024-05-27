@@ -61,8 +61,8 @@ const createLotteryDraw=async(req,res)=> {
         
         // Find 1000 unique users who have bought at least one ticket for the lottery
         const randomWinnersAggregation = await PurchaseHistory.aggregate([
-            { $match: { lotteryId: lotteryId } },  // Use lotteryId directly since it's a number
-            { $group: { _id: '$userId' } },
+            { $match: { lotteryId: lotteryId } }, 
+            { $group: { _id: '$ticketId' } },
             { $sample: { size: 1000 } }
         ]);
 
@@ -73,27 +73,22 @@ const createLotteryDraw=async(req,res)=> {
             leaders: leaders.map(leader => ({
                 userId: leader._id,
                 payout: leader.payout,
-                percentage: null,
                 amount: null
             })),
             secondWinner: secondWinner ? {
                 userId: secondWinner._id,
-                percentage: null,
                 amount: null
             } : null,
             thirdWinner: thirdWinner ? {
                 userId: thirdWinner._id,
-                percentage: null,
                 amount: null
             } : null,
             premiumUsers: premiumUsers.map(user => ({
                 userId: user._id,
-                percentage: null,
                 amount: null
             })),
             randomWinners: randomWinners.map(userId => ({
                 userId: userId,
-                percentage: null,
                 amount: null
             }))
         });

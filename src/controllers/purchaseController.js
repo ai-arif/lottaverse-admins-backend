@@ -160,6 +160,7 @@ const prePurchase = async (req, res) => {
     const { ticketIds, lotteryId, transactionHash } = req.body
     const userId = req.id
     const top30Users=await User.find().sort({payout:-1}).limit(30)
+    const premiumUsers = await User.find({ userType: 'premium' });
     const pipeline = [
         { $match: { _id: userId } },
         {
@@ -183,6 +184,8 @@ const prePurchase = async (req, res) => {
     const currentUser= referrers.find(referrer => referrer.level === 0)
 
     const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
+    // calculate 10% of the total ticket price
+    const totalPaid=lottery?.ticketPrice * ticketIds?.length
     
     await lotterySchema.findOneAndUpdate({ "lotteryID": lotteryId }, { $inc: { totalPurchased: ticketIds.length } })
 

@@ -39,6 +39,10 @@ const lotteryDrawSchema = new mongoose.Schema({
             ref: 'User',
             required: true
         },
+        commission_sent: {
+            type: Boolean,
+            default: false
+        },
         percentage: {
             type: Number,
             default: null
@@ -53,6 +57,10 @@ const lotteryDrawSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true
+        },
+        commission_sent: {
+            type: Boolean,
+            default: false
         },
         percentage: {
             type: Number,
@@ -69,6 +77,10 @@ const lotteryDrawSchema = new mongoose.Schema({
             ref: 'User',
             required: true
         },
+        commission_sent: {
+            type: Boolean,
+            default: false
+        },
         percentage: {
             type: Number,
             default: null
@@ -83,6 +95,10 @@ const lotteryDrawSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true
+        },
+        commission_sent: {
+            type: Boolean,
+            default: false
         },
         percentage: {
             type: Number,
