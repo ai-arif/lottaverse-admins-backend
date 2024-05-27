@@ -5,6 +5,19 @@ const sendResponse = require("../utils/sendResponse");
 const moment = require("moment");
 const ethers = require("ethers");
 
+function formatAddress(address) {
+  // Check if the address is long enough
+  if (address.length <= 6) {
+    return address; // No need to format if address is too short
+  }
+
+  // Extract the first 3 and last 3 characters
+  const firstPart = address.slice(0, 4);
+  const lastPart = address.slice(-4);
+
+  // Return the formatted address
+  return `${firstPart}***${lastPart}`;
+}
 const createLottery = async (req, res) => {
   try {
     // api body accept params
@@ -148,22 +161,54 @@ const activeLotteries = async (req, res) => {
       lottery.userCount = userCount ? userCount.count : 0;
     });
   // hasDraw check if the lottery has been drawn, then get the second, third and first one from the random winners
-    const lotteryDraws = await LotteryDraw.find({ lotteryId: { $in: lotteryIds } });
-    activeLotteries.forEach(lottery => {
-      const lotteryDraw = lotteryDraws.find(draw => draw.lotteryId === lottery.lotteryID);
-      if (lotteryDraw) {
-        lottery.hasDraw = true;
-        lottery.firstWinner = lotteryDraw.leaders[0];
-        lottery.secondWinner = lotteryDraw.secondWinner;
-        lottery.thirdWinner = lotteryDraw.thirdWinner;
+  const lotteryDraws = await LotteryDraw.find({ lotteryId: { $in: lotteryIds } })
+  .populate({
+      path: 'secondWinner.userId',
+      select: 'address'
+  })
+  .populate({
+      path: 'thirdWinner.userId',
+      select: 'address'
+  })
+  .populate({
+      path: 'randomWinners.userId',
+      select: 'address',
+      options: { limit: 1 } // Limit to the first random winner
+  });
+
+activeLotteries.forEach(lottery => {
+  const lotteryDraw = lotteryDraws.find(draw => draw.lotteryId === lottery.lotteryID);
+  if (lotteryDraw) {
+      lottery.hasDraw = true;
+
+      // Ensure ticketId is handled properly for second and third winners
+      lottery.secondWinner = lotteryDraw.secondWinner ? {
+          ticketId: lotteryDraw.secondWinner.ticketId || null,
+          address: formatAddress(lotteryDraw.secondWinner.userId.address)
+      } : null;
+
+      lottery.thirdWinner = lotteryDraw.thirdWinner ? {
+          ticketId: lotteryDraw.thirdWinner.ticketId || null,
+          address: formatAddress(lotteryDraw.thirdWinner.userId.address)
+      } : null;
+
+      // Handle random winner properly
+      if (lotteryDraw.randomWinners && lotteryDraw.randomWinners.length > 0) {
+          lottery.randomWinner = {
+              ticketId: lotteryDraw.randomWinners[0].ticketId || null,
+              address: formatAddress(lotteryDraw.randomWinners[0].userId.address)
+          };
       } else {
-        lottery.hasDraw = false;
+          lottery.randomWinner = null;
       }
-    });
-
-    
-
-  
+  } else {
+      lottery.hasDraw = false;
+      lottery.firstWinner = null;
+      lottery.secondWinner = null;
+      lottery.thirdWinner = null;
+      lottery.randomWinner = null;
+  }
+});  
     sendResponse(res, 200, true, "Active lotteries", activeLotteries);
   } catch (error) {
     sendResponse(res, 500, false, error.message, error.message);
