@@ -95,9 +95,10 @@ const createLotteryDraw=async(req,res)=> {
 
         await lotteryDraw.save();
         await Lottery.updateOne({ lotteryID: lotteryId }, { hasDraw: true });
-        // all the winners payout will be 0
-        await User.updateMany({ payout: { $gt: 0 } }, { payout: 0 });
-        
+        // all the winners payout will be 0, totalTickets 0
+        await User.updateMany({ payout: { $gt: 0 } }, { payout: 0, totalTickets: 0 });
+
+
         return sendResponse(res, 200, 'Lottery draw created successfully', lotteryDraw);
     } catch (error) {
         console.error("Error creating lottery draw:", error);

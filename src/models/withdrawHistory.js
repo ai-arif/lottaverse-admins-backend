@@ -9,12 +9,6 @@ const withdrawSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    transactionHash: {
-        type: String,
-        required: true
-    },
-    status: {
-        type: String,
-        required: false
-    }
 }, { timestamps: true });
+
+module.exports = mongoose.model('WithdrawHistory', withdrawSchema);

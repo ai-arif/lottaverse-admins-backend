@@ -19,6 +19,7 @@ const {
   prePurchase
 } = require('../controllers/purchaseController')
 
+const {withdraw, getWithdrawHistory} = require('../controllers/withdrawHistoryController')
 const { createLottery,activeLotteries } = require("../controllers/createLottery");
 
 router.get("/referral-hierarchy", verifyToken, getReferralHierarchy);
@@ -38,5 +39,8 @@ router.get("/commissionhistory",verifyToken,getCommissionHistory)
 
 router.post("/drawlottery",createLotteryDraw)
 router.get("/drawhistory/:lotteryId",getDrawHistory)
+
+router.post("/withdraw",verifyToken,withdraw)
+router.get("/withdrawhistory",verifyToken,getWithdrawHistory)
 
 module.exports = router; 
