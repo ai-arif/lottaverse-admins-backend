@@ -1,5 +1,6 @@
 const Lottery = require("../models/lotterySchema");
 const PurchaseHistory = require('../models/puchaseHistorySchema');
+const LotteryDraw=require('../models/lotteryDrawSchema');
 const sendResponse = require("../utils/sendResponse");
 const moment = require("moment");
 const ethers = require("ethers");
@@ -146,10 +147,19 @@ const activeLotteries = async (req, res) => {
       const userCount = userCounts.find(count => count._id === lottery.lotteryID);
       lottery.userCount = userCount ? userCount.count : 0;
     });
-
-
-    
-      
+  // hasDraw check if the lottery has been drawn, then get the second, third and first one from the random winners
+    const lotteryDraws = await LotteryDraw.find({ lotteryId: { $in: lotteryIds } });
+    activeLotteries.forEach(lottery => {
+      const lotteryDraw = lotteryDraws.find(draw => draw.lotteryId === lottery.lotteryID);
+      if (lotteryDraw) {
+        lottery.hasDraw = true;
+        lottery.firstWinner = lotteryDraw.leaders[0];
+        lottery.secondWinner = lotteryDraw.secondWinner;
+        lottery.thirdWinner = lotteryDraw.thirdWinner;
+      } else {
+        lottery.hasDraw = false;
+      }
+    });
 
     
 

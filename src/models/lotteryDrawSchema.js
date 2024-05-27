@@ -20,13 +20,9 @@ const lotteryDrawSchema = new mongoose.Schema({
             ref: 'User',
             required: true
         },
-        payout: {
-            type: Number,
-            required: true
-        },
-        percentage: {
-            type: Number,
-            default: null
+        commission_sent: {
+            type: Boolean,
+            default: false
         },
         amount: {
             type: Number,
@@ -43,10 +39,12 @@ const lotteryDrawSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
-        percentage: {
-            type: Number,
-            default: null
-        },
+        ticketId: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true
+        },        
         amount: {
             type: Number,
             default: null
@@ -62,34 +60,17 @@ const lotteryDrawSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
-        percentage: {
-            type: Number,
-            default: null
+        ticketId: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true
         },
         amount: {
             type: Number,
             default: null
         }
     },
-    premiumUsers: [{
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-            required: true
-        },
-        commission_sent: {
-            type: Boolean,
-            default: false
-        },
-        percentage: {
-            type: Number,
-            default: null
-        },
-        amount: {
-            type: Number,
-            default: null
-        }
-    }],
     randomWinners: [{
         userId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -100,13 +81,15 @@ const lotteryDrawSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
-        percentage: {
-            type: Number,
-            default: null
-        },
         amount: {
             type: Number,
             default: null
+        },
+        ticketId: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true
         }
     }]
 }, { timestamps: true });

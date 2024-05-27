@@ -9,11 +9,11 @@ function getDateBasedRandomIndex(max) {
     return now.getMilliseconds() % max;
 }
 
-const createLotteryDraw=async(req,res)=> {
+const createLotteryDraw = async (req, res) => {
     try {
-        // Check if the lottery exists and is active
         const { lotteryId } = req.body;
         const lottery = await Lottery.findOne({ lotteryID: lotteryId });
+
         if (!lottery) {
             throw new Error("Lottery not found.");
         }
@@ -24,126 +24,127 @@ const createLotteryDraw=async(req,res)=> {
             return sendResponse(res, 400, 'Lottery has already been drawn');
         }
 
-        // Check if the lottery has already been drawn
         const existingDraw = await LotteryDraw.findOne({ lotteryId });
-        
-        
+
         if (existingDraw) {
             throw new Error("Lottery has already been drawn.");
         }
 
-        // Find top 30 leaders based on payout
         const leaders = await User.find({ payout: { $gt: 0 } }).sort({ payout: -1 }).limit(30);
 
-        // Find all purchase histories for the specified lottery
         const purchaseHistories = await PurchaseHistory.find({ lotteryId }).populate('userId');
-        
-        
-        // Choose second and third winners randomly from the purchaseHistories using date-based random index
+
         let secondWinner = null;
         let thirdWinner = null;
         if (purchaseHistories.length > 0) {
             const secondWinnerIndex = getDateBasedRandomIndex(purchaseHistories.length);
-            secondWinner = purchaseHistories[secondWinnerIndex].userId;
+            secondWinner = purchaseHistories[secondWinnerIndex];
 
             if (purchaseHistories.length > 1) {
                 let thirdWinnerIndex;
                 do {
                     thirdWinnerIndex = getDateBasedRandomIndex(purchaseHistories.length);
                 } while (thirdWinnerIndex === secondWinnerIndex);
-                thirdWinner = purchaseHistories[thirdWinnerIndex].userId;
+                thirdWinner = purchaseHistories[thirdWinnerIndex];
             }
         }
 
-        // Find premium users
         const premiumUsers = await User.find({ userType: 'premium' });
-        
-        
-        // Find 1000 unique users who have bought at least one ticket for the lottery
+
         const randomWinnersAggregation = await PurchaseHistory.aggregate([
-            { $match: { lotteryId: lotteryId } }, 
-            { $group: { _id: '$ticketId' } },
+            { $match: { lotteryId: lotteryId } },
+            { $group: { _id: '$ticketId', userId: { $first: '$userId' } } },
             { $sample: { size: 1000 } }
         ]);
 
-        const randomWinners = randomWinnersAggregation.map(item => item._id);
+        const randomWinners = randomWinnersAggregation.map(item => ({
+            ticketId: item._id,
+            userId: item.userId
+        }));
 
         const lotteryDraw = new LotteryDraw({
             lotteryId,
             leaders: leaders.map(leader => ({
                 userId: leader._id,
-                payout: leader.payout,
-                amount: null
+                commission_sent: false,
+                amount: null,
             })),
             secondWinner: secondWinner ? {
-                userId: secondWinner._id,
+                userId: secondWinner.userId._id,
+                commission_sent: false,
+                ticketId: secondWinner.ticketId,
                 amount: null
             } : null,
             thirdWinner: thirdWinner ? {
-                userId: thirdWinner._id,
+                userId: thirdWinner.userId._id,
+                commission_sent: false,
+                ticketId: thirdWinner.ticketId,
                 amount: null
             } : null,
-            premiumUsers: premiumUsers.map(user => ({
-                userId: user._id,
-                amount: null
-            })),
-            randomWinners: randomWinners.map(userId => ({
-                userId: userId,
+            randomWinners: randomWinners.map(winner => ({
+                userId: winner.userId,
+                commission_sent: false,
+                ticketId: winner.ticketId,
                 amount: null
             }))
         });
 
         await lotteryDraw.save();
         await Lottery.updateOne({ lotteryID: lotteryId }, { hasDraw: true });
-        // all the winners payout will be 0, totalTickets 0
         await User.updateMany({ payout: { $gt: 0 } }, { payout: 0, totalTickets: 0 });
-
 
         return sendResponse(res, 200, 'Lottery draw created successfully', lotteryDraw);
     } catch (error) {
         console.error("Error creating lottery draw:", error);
-        sendResponse(res, 500,false, error.message);
+        sendResponse(res, 500, false, error.message);
     }
 }
 
 const getDrawHistory = async (req, res) => {
     try {
         const { lotteryId } = req.params;
-        const lottery = await Lottery.findOne({ lotteryID: lotteryId});
+        const lottery = await Lottery.findOne({ lotteryID: lotteryId });
+
         if (!lottery) {
-            return sendResponse(res, 404,false, 'Lottery not found');
+            return sendResponse(res, 404, false, 'Lottery not found');
         }
         if (!lottery.hasDraw) {
-            return sendResponse(res, 404,false, 'Lottery has not been drawn yet');
+            return sendResponse(res, 404, false, 'Lottery has not been drawn yet');
         }
-        const drawHistory = await LotteryDraw.findOne({ lotteryId }).populate('leaders.userId').populate('secondWinner.userId').populate('thirdWinner.userId').populate('premiumUsers.userId').populate('randomWinners.userId');
-        return sendResponse(res, 200,true, 'Draw history fetched successfully', {
+
+        const drawHistory = await LotteryDraw.findOne({ lotteryId })
+            .populate('leaders.userId')
+            .populate('secondWinner.userId')
+            .populate('thirdWinner.userId')
+            .populate('randomWinners.userId');
+
+        return sendResponse(res, 200, true, 'Draw history fetched successfully', {
             drawHistory,
             lottery
         });
-    }
-    catch (error) {
+    } catch (error) {
         return sendResponse(res, 500, error.message);
     }
 }
 
-// update the second user amount and percentage, only take lotteryId amount and percentage
-const updateSecondWinner = async (req,res) => {
+const updateSecondWinner = async (req, res) => {
     try {
         const { lotteryId, amount, percentage } = req.body;
         const lottery = await LotteryDraw.findOne({ lotteryId });
+
         if (!lottery) {
-            return sendResponse(res, 404,false, 'Lottery draw not found');
+            return sendResponse(res, 404, false, 'Lottery draw not found');
         }
-    }
-    catch(e){
-        return sendResponse(res, 500, e.message);
+
+        // Assume there's logic to update the second winner's amount and percentage here
+
+    } catch (error) {
+        return sendResponse(res, 500, error.message);
     }
 }
-        
-    
 
 module.exports = {
     createLotteryDraw,
     getDrawHistory
 };
+ 
