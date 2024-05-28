@@ -228,36 +228,86 @@ const getTypeWiseLottery=async(req,res)=>{
   }
 }
 // get round wise lottery
-const getLotteryResult=async(req,res)=>{
-  try{
-    const {id}=req.params;
-    const lottery=await Lottery.findOne({_id:id});
-    const lotteryDraw=await LotteryDraw.findOne({lotteryId:lottery.lotteryID});
-    // sendResponse(res, 200, true, "Lottery Draw", lotteryDraw);
-    // if not drawn, return error message
-    if(!lotteryDraw){
-      sendResponse(res, 200, true, "Lottery Draw", "Lottery not drawn yet");
-    }
-    // get all the winners in an array
-    let winners=[];
-    // secondWinner, thirdWinner, randomWinners
-    if(lotteryDraw.secondWinner){
-      winners.push(lotteryDraw.secondWinner);
-    }
-    if(lotteryDraw.thirdWinner){
-      winners.push(lotteryDraw.thirdWinner);
-    }
-    if(lotteryDraw.randomWinners){
-      winners.push(...lotteryDraw.randomWinners);
-    }
-    sendResponse(res, 200, true, "Lottery Draw", winners);
+const getLotteryResult = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    // Find the lottery
+    const lottery = await Lottery.findOne({ _id: id });
+    if (!lottery) {
+      return sendResponse(res, 404, false, 'Lottery not found');
+    }
 
-  }
-  catch{
-    sendResponse(res, 500, false, error.message, error.message);
+    // Find the lottery draw and populate userId fields
+    const lotteryDraw = await LotteryDraw.findOne({ lotteryId: lottery.lotteryID }).populate([
+      {
+        path: 'leaders.userId',
+        model: 'User',
+        select: '_id address' // Add fields you want to select
+      },
+      {
+        path: 'secondWinner.userId',
+        model: 'User',
+        select: '_id address' // Add fields you want to select
+      },
+      {
+        path: 'thirdWinner.userId',
+        model: 'User',
+        select: '_id address' // Add fields you want to select
+      },
+      {
+        path: 'randomWinners.userId',
+        model: 'User',
+        select: '_id address' // Add fields you want to select
+      }
+    ]);
+
+    if (!lotteryDraw) {
+      return sendResponse(res, 404, false, 'Lottery not drawn yet');
+    }
+
+    // Prepare the winners array
+    const winners = [];
+
+    if (lotteryDraw.secondWinner) {
+      winners.push({
+        position: "Second Winner",
+        userId: lotteryDraw.secondWinner.userId._id,
+        address: lotteryDraw.secondWinner.userId.address,
+        ticketId: lotteryDraw.secondWinner.ticketId,
+        amount: lottery.prizes.secondPrize
+      });
+    }
+
+    if (lotteryDraw.thirdWinner) {
+      winners.push({
+        position: "Third Winner",
+        userId: lotteryDraw.thirdWinner.userId._id,
+        address: lotteryDraw.thirdWinner.userId.address,
+        ticketId: lotteryDraw.thirdWinner.ticketId,
+        amount: lottery.prizes.thirdPrize
+      });
+    }
+
+    if (lotteryDraw.randomWinners.length > 0) {
+      lotteryDraw.randomWinners.forEach(winner => {
+        winners.push({
+          position: "Random Winner",
+          userId: winner.userId._id,
+          address: winner.userId.address,
+          ticketId: winner.ticketId,
+          amount: lottery.prizes.otherPrizes
+        });
+      });
+    }
+
+    return sendResponse(res, 200, true, "Lottery Draw", winners);
+  } catch (error) {
+    sendResponse(res, 500, false, error.message);
   }
 }
+
+
 
 
 module.exports = { createLottery, activeLotteries,getTypeWiseLottery,getLotteryResult };

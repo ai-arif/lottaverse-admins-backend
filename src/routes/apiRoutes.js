@@ -31,7 +31,7 @@ router.get("/user", verifyToken, getUserDetails);
 router.post("/register", registerUser);
 router.post("/createlottery", createLottery);
 router.get("/lottery-type/:lotteryType", getTypeWiseLottery);
-router.get("/lottery/:id", getLotteryResult);
+router.get("/lottery-winner/:id", getLotteryResult);
 router.get("/activelotteries", activeLotteries);
 
 router.post("/createpurchasehistory",verifyToken,createPurchaseHistory)
