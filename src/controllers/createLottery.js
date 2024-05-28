@@ -1,6 +1,6 @@
 const Lottery = require("../models/lotterySchema");
 const PurchaseHistory = require('../models/puchaseHistorySchema');
-const LotteryDraw=require('../models/lotteryDrawSchema');
+const LotteryDraw = require('../models/lotteryDrawSchema');
 const sendResponse = require("../utils/sendResponse");
 const moment = require("moment");
 const ethers = require("ethers");
@@ -20,22 +20,7 @@ function formatAddress(address) {
 }
 const createLottery = async (req, res) => {
   try {
-    // api body accept params
-    //    {
-    // lotteryType: "",
-    // expiry: "",
-    // firstPrize: "",
-    // secondPrize: "",
-    // thirdPrize: "",
-    // fourthPrize: "",
-    // otherPrizes: "",
-    // maxTicketCount: "",
-    // ticketPrice: "",
-    // operatorCommissionPercentage: "",
-    // lotteryOperator: address,;
-    // transactionHash
-    //    }
-
+    
     const {
       lotteryOperator,
       ticketPrice,
@@ -81,7 +66,11 @@ const createLottery = async (req, res) => {
     //     lotteryId
     //   )
     //   .send({ from: accounts[0] });
-
+    const lotteryExists = await Lottery.findOne({lotteryType})
+    let round=1;
+    if(lotteryExists){
+      round=lotteryExists.round+1;
+    }
     // Save to MongoDB
     const lottery = new Lottery({
       lotteryOperator,
@@ -90,6 +79,7 @@ const createLottery = async (req, res) => {
       operatorCommissionPercentage,
       expiration: unixEpochTime,
       lotteryID,
+      round,
       lotteryType,
       prizes,
       transactionHash,
@@ -112,15 +102,15 @@ const createLottery = async (req, res) => {
 
 const activeLotteries = async (req, res) => {
   try {
-    
-    
-      // const activeLotteries = await Lottery.aggregate([
-      //   { $match: { isActive: true } }, 
-      //   { $sort: { createdAt: -1 } }, 
-      //   { $group: { _id: "$lotteryType", count: { $sum: 1 } } },
-      //   { $limit: 2 },
-      // ]);
-      const recentActiveLotteries = await Lottery.find({ isActive: true })
+
+
+    // const activeLotteries = await Lottery.aggregate([
+    //   { $match: { isActive: true } }, 
+    //   { $sort: { createdAt: -1 } }, 
+    //   { $group: { _id: "$lotteryType", count: { $sum: 1 } } },
+    //   { $limit: 2 },
+    // ]);
+    const recentActiveLotteries = await Lottery.find({ isActive: true })
       .sort({ createdAt: -1 })
       .limit(2)
       .lean(); // .lean() to get plain JavaScript objects
@@ -160,59 +150,114 @@ const activeLotteries = async (req, res) => {
       const userCount = userCounts.find(count => count._id === lottery.lotteryID);
       lottery.userCount = userCount ? userCount.count : 0;
     });
-  // hasDraw check if the lottery has been drawn, then get the second, third and first one from the random winners
-  const lotteryDraws = await LotteryDraw.find({ lotteryId: { $in: lotteryIds } })
-  .populate({
-      path: 'secondWinner.userId',
-      select: 'address'
-  })
-  .populate({
-      path: 'thirdWinner.userId',
-      select: 'address'
-  })
-  .populate({
-      path: 'randomWinners.userId',
-      select: 'address',
-      options: { limit: 1 } // Limit to the first random winner
-  });
+    // hasDraw check if the lottery has been drawn, then get the second, third and first one from the random winners
+    const lotteryDraws = await LotteryDraw.find({ lotteryId: { $in: lotteryIds } })
+      .populate({
+        path: 'secondWinner.userId',
+        select: 'address'
+      })
+      .populate({
+        path: 'thirdWinner.userId',
+        select: 'address'
+      })
+      .populate({
+        path: 'randomWinners.userId',
+        select: 'address',
+        options: { limit: 1 } // Limit to the first random winner
+      });
 
-activeLotteries.forEach(lottery => {
-  const lotteryDraw = lotteryDraws.find(draw => draw.lotteryId === lottery.lotteryID);
-  if (lotteryDraw) {
-      lottery.hasDraw = true;
+    activeLotteries.forEach(lottery => {
+      const lotteryDraw = lotteryDraws.find(draw => draw.lotteryId === lottery.lotteryID);
+      if (lotteryDraw) {
+        lottery.hasDraw = true;
 
-      // Ensure ticketId is handled properly for second and third winners
-      lottery.secondWinner = lotteryDraw.secondWinner ? {
+        // Ensure ticketId is handled properly for second and third winners
+        lottery.secondWinner = lotteryDraw.secondWinner ? {
           ticketId: lotteryDraw.secondWinner.ticketId || null,
           address: formatAddress(lotteryDraw.secondWinner.userId.address)
-      } : null;
+        } : null;
 
-      lottery.thirdWinner = lotteryDraw.thirdWinner ? {
+        lottery.thirdWinner = lotteryDraw.thirdWinner ? {
           ticketId: lotteryDraw.thirdWinner.ticketId || null,
           address: formatAddress(lotteryDraw.thirdWinner.userId.address)
-      } : null;
+        } : null;
 
-      // Handle random winner properly
-      if (lotteryDraw.randomWinners && lotteryDraw.randomWinners.length > 0) {
+        // Handle random winner properly
+        if (lotteryDraw.randomWinners && lotteryDraw.randomWinners.length > 0) {
           lottery.randomWinner = {
-              ticketId: lotteryDraw.randomWinners[0].ticketId || null,
-              address: formatAddress(lotteryDraw.randomWinners[0].userId.address)
+            ticketId: lotteryDraw.randomWinners[0].ticketId || null,
+            address: formatAddress(lotteryDraw.randomWinners[0].userId.address)
           };
-      } else {
+        } else {
           lottery.randomWinner = null;
+        }
+      } else {
+        lottery.hasDraw = false;
+        lottery.firstWinner = null;
+        lottery.secondWinner = null;
+        lottery.thirdWinner = null;
+        lottery.randomWinner = null;
       }
-  } else {
-      lottery.hasDraw = false;
-      lottery.firstWinner = null;
-      lottery.secondWinner = null;
-      lottery.thirdWinner = null;
-      lottery.randomWinner = null;
-  }
-});  
+    });
     sendResponse(res, 200, true, "Active lotteries", activeLotteries);
   } catch (error) {
     sendResponse(res, 500, false, error.message, error.message);
   }
 };
 
-module.exports = { createLottery, activeLotteries };
+const getRoundAndTypeWiseHistory=async(req,res)=>{
+  try{
+    const {lotteryType, round}=req.body;
+    // there are multiple lotteries with the same type, so we need to get the lotteryId of the lottery
+    const lotteries=await Lottery.find({lotteryType:lotteryType});
+  }
+  catch{
+    sendResponse(res, 500, false, error.message, error.message);
+  }
+}
+
+// get type wise lottery
+const getTypeWiseLottery=async(req,res)=>{
+  try{
+    const {lotteryType}=req.params;
+    const lotteries=await Lottery.find({lotteryType:lotteryType});
+    sendResponse(res, 200, true, "Lotteries", lotteries);
+  }
+  catch{
+    sendResponse(res, 500, false, error.message, error.message);
+  }
+}
+// get round wise lottery
+const getLotteryResult=async(req,res)=>{
+  try{
+    const {id}=req.params;
+    const lottery=await Lottery.findOne({_id:id});
+    const lotteryDraw=await LotteryDraw.findOne({lotteryId:lottery.lotteryID});
+    // sendResponse(res, 200, true, "Lottery Draw", lotteryDraw);
+    // if not drawn, return error message
+    if(!lotteryDraw){
+      sendResponse(res, 200, true, "Lottery Draw", "Lottery not drawn yet");
+    }
+    // get all the winners in an array
+    let winners=[];
+    // secondWinner, thirdWinner, randomWinners
+    if(lotteryDraw.secondWinner){
+      winners.push(lotteryDraw.secondWinner);
+    }
+    if(lotteryDraw.thirdWinner){
+      winners.push(lotteryDraw.thirdWinner);
+    }
+    if(lotteryDraw.randomWinners){
+      winners.push(...lotteryDraw.randomWinners);
+    }
+    sendResponse(res, 200, true, "Lottery Draw", winners);
+
+
+  }
+  catch{
+    sendResponse(res, 500, false, error.message, error.message);
+  }
+}
+
+
+module.exports = { createLottery, activeLotteries,getTypeWiseLottery,getLotteryResult };

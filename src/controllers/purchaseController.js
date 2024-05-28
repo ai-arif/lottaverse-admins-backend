@@ -1,5 +1,6 @@
 const PurchaseHistory = require('../models/puchaseHistorySchema')
 const lotterySchema = require('../models/lotterySchema')
+const LotteryDraw =require('../models/lotteryDrawSchema')
 const CommissionHistory = require('../models/commissionHistory')
 const User = require('../models/userSchema')
 const Ticket = require('../models/ticketsSchema')
@@ -157,13 +158,52 @@ const getPercentage = (level) => {
 }
 
 // get the purchase history of a user
+// const getPurchaseHistory = async (req, res) => {
+//     try {
+//         const userId = req.id
+//         const purchaseHistories = await PurchaseHistory.find({ userId }).sort({ createdAt: -1 })
+//         return sendResponse(res, 200, true, 'Purchase history fetched successfully', purchaseHistories)
+//     } catch (error) {
+//         sendResponse(res, 500, error.message)
+//     }
+// }
+
 const getPurchaseHistory = async (req, res) => {
     try {
-        const userId = req.id
-        const purchaseHistories = await PurchaseHistory.find({ userId }).sort({ createdAt: -1 })
-        return sendResponse(res, 200, true, 'Purchase history fetched successfully', purchaseHistories)
+        const userId = req.id;
+
+        // Fetch the user's purchase history
+        const purchaseHistories = await PurchaseHistory.find({ userId }).sort({ createdAt: -1 });
+
+        // Add winner and draw information to each purchase history entry
+        const enhancedHistories = await Promise.all(purchaseHistories.map(async (purchase) => {
+            const lotteryDraw = await LotteryDraw.findOne({ lotteryId: purchase.lotteryId });
+
+            if (lotteryDraw) {
+                const isWinner = {
+                    leader: lotteryDraw.leaders.some(leader => leader.userId.toString() === userId.toString()),
+                    secondPrize: lotteryDraw.secondWinner.userId.toString() === userId.toString() && lotteryDraw.secondWinner.ticketId === purchase.ticketId,
+                    thirdPrize: lotteryDraw.thirdWinner.userId.toString() === userId.toString() && lotteryDraw.thirdWinner.ticketId === purchase.ticketId,
+                    randomWinner: lotteryDraw.randomWinners.some(winner => winner.userId.toString() === userId.toString() && winner.ticketId === purchase.ticketId)
+                };
+
+                return {
+                    ...purchase.toObject(),
+                    isWinner,
+                    isDrawn: true
+                };
+            } else {
+                return {
+                    ...purchase.toObject(),
+                    isWinner: null, // Lottery has not been drawn yet
+                    isDrawn: false
+                };
+            }
+        }));
+
+        return sendResponse(res, 200, true, 'Purchase history fetched successfully', enhancedHistories);
     } catch (error) {
-        sendResponse(res, 500, error.message)
+        sendResponse(res, 500, false, 'Internal server error', error.message);
     }
 }
 

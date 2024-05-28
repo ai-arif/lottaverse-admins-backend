@@ -7,6 +7,12 @@ const lotterySchema = new mongoose.Schema(
     maxTickets: Number,
     operatorCommissionPercentage: Number,
     expiration: Number,
+    round:{
+      type: Number,
+      required: true,
+      default: 1,
+      min: 0
+    },
     lotteryID: {
       type: Number,
       required: true,

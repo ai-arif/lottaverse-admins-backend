@@ -50,29 +50,99 @@ function buildHierarchy(user) {
 
     return hierarchy;
 }
-// get referralLevel group by count, and sort by count, also check how many of them are active, and inactive
+function calculateReferralData2(user) {
+    const maxLevel = 7;
+    const referralData = new Array(maxLevel).fill(0).map((_, idx) => ({
+        referralLevel: idx + 1,
+        totalUsers: 0,
+        activeUsers: 0,
+        inactiveUsers: 0
+    }));
+
+    // Recursive function to traverse the referral hierarchy
+    function traverse(node, level) {
+        if (level > maxLevel) return;
+
+        referralData[level - 1].totalUsers++;
+
+        if (node.expiryDate && new Date(node.expiryDate) > new Date()) {
+            referralData[level - 1].activeUsers++;
+        } else {
+            referralData[level - 1].inactiveUsers++;
+        }
+
+        if (node.referredUsers && node.referredUsers.length > 0) {
+            node.referredUsers.forEach(referredUser => {
+                traverse(referredUser, level + 1);
+            });
+        }
+    }
+
+    traverse(user, 1); // Start traversal from the root user
+
+    return referralData;
+}
+
+
 exports.getReferralLevelCount = async (req, res) => {
     try {
         const userId = req.id;
+
         // Fetch the user with the referral hierarchy populated
         const user = await User.findById(userId).populate({
             path: 'referredUsers',
             populate: {
                 path: 'referredUsers',
                 populate: {
-                    path: 'referredUsers'
+                    path: 'referredUsers',
+                    populate: {
+                        path: 'referredUsers',
+                        populate: {
+                            path: 'referredUsers',
+                            populate: {
+                                path: 'referredUsers',
+                                populate: {
+                                    path: 'referredUsers'
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });
 
         // Calculate referral data as an array of objects
-        const referralData = calculateReferralData(user);
+        const referralData = calculateReferralData2(user);
 
         sendResponse(res, 200, true, 'Referral level count fetched successfully', referralData);
     } catch (err) {
         sendResponse(res, 500, false, 'Internal server error', err.message);
     }
 };
+
+// get referralLevel group by count, and sort by count, also check how many of them are active, and inactive
+// exports.getReferralLevelCount = async (req, res) => {
+//     try {
+//         const userId = req.id;
+//         // Fetch the user with the referral hierarchy populated
+//         const user = await User.findById(userId).populate({
+//             path: 'referredUsers',
+//             populate: {
+//                 path: 'referredUsers',
+//                 populate: {
+//                     path: 'referredUsers'
+//                 }
+//             }
+//         });
+
+//         // Calculate referral data as an array of objects
+//         const referralData = calculateReferralData(user);
+
+//         sendResponse(res, 200, true, 'Referral level count fetched successfully', referralData);
+//     } catch (err) {
+//         sendResponse(res, 500, false, 'Internal server error', err.message);
+//     }
+// };
 
 // Function to calculate referral data
 function calculateReferralData(user) {

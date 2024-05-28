@@ -20,7 +20,7 @@ const {
 } = require('../controllers/purchaseController')
 
 const {withdraw, getWithdrawHistory} = require('../controllers/withdrawHistoryController')
-const { createLottery,activeLotteries } = require("../controllers/createLottery");
+const { createLottery,activeLotteries,getTypeWiseLottery,getLotteryResult } = require("../controllers/createLottery");
 
 router.get("/referral-hierarchy", verifyToken, getReferralHierarchy);
 router.get("/referral-level-count", verifyToken, getReferralLevelCount);
@@ -30,6 +30,8 @@ router.get("/user", verifyToken, getUserDetails);
 
 router.post("/register", registerUser);
 router.post("/createlottery", createLottery);
+router.get("/lottery-type/:lotteryType", getTypeWiseLottery);
+router.get("/lottery/:id", getLotteryResult);
 router.get("/activelotteries", activeLotteries);
 
 router.post("/createpurchasehistory",verifyToken,createPurchaseHistory)
