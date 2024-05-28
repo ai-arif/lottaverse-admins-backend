@@ -159,8 +159,7 @@ const getPurchaseHistory = async (req, res) => {
 const prePurchase = async (req, res) => {
     const { ticketIds, lotteryId, transactionHash } = req.body
     const userId = req.id
-    const top30Users=await User.find().sort({payout:-1}).limit(30)
-    const premiumUsers = await User.find({ userType: 'premium' });
+    const premiumUsers = await User.find({ userType: 'premium' }).select('address');
     const pipeline = [
         { $match: { _id: userId } },
         {
@@ -179,38 +178,20 @@ const prePurchase = async (req, res) => {
     const referrerHierarchy = await User.aggregate(pipeline);
 
     const referrers = referrerHierarchy.length > 0 ? referrerHierarchy[0].referrers : [];
-    // get the user whose level is 0    
-
-    const currentUser= referrers.find(referrer => referrer.level === 0)
+    
 
     const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
     // calculate 10% of the total ticket price
     const totalPaid=lottery?.ticketPrice * ticketIds?.length
+    // calculate 10% of the total ticket price and divide it with the number of premium users
+    const commissionAmount = (totalPaid * 0.1) / premiumUsers.length
     
-    await lotterySchema.findOneAndUpdate({ "lotteryID": lotteryId }, { $inc: { totalPurchased: ticketIds.length } })
-
-
-
+    
     if (!lottery) {
         return sendResponse(res, 404, 'Lottery not found')
     }
 
     let ticketNumbers = ticketIds.map(ids => parseInt(ids.join(''), 10));
-    let purchaseHistories = ticketNumbers.map(ticketNumber => {
-
-        return {
-            userId,
-            ticketId: ticketNumber,
-            lotteryId,
-            lotteryPackage: lottery.lotteryType,
-            ticketQuantity: 1,
-            transactionHash,
-            amount: lottery.ticketPrice
-        }
-    });
-
-
-    const commissionHistories = []
     
     const referAddress=[]
     const amount=[]
@@ -223,24 +204,37 @@ const prePurchase = async (req, res) => {
             const commissionAmount = (percentage / 100) * lottery.ticketPrice
             referAddress.push(referrers[i].address)
             amount.push(commissionAmount)
-            commissionHistories.push({
-                from: userId,
-                to: referrers[i]._id,
-                fromAddress: currentUser.address,
-                toAddress: referrers[i].address,
-                ticketId: ticketNumbers[j],
-                transactionHash,
-                lotteryId,
-                percentage,
-                transactionHash,
-                amount: commissionAmount,
-                level: referrers[i].level
-            })
+            
         }
     }
     
+    for (let i = 0; i < premiumUsers.length; i++) {
+        referAddress.push(premiumUsers[i].address)
+        amount.push(commissionAmount)
+    }
+    const addressAmountMap = {};
+    for (let i = 0; i < referAddress.length; i++) {
+        const address = referAddress[i];
+        const amt = amount[i];
+        if (addressAmountMap[address]) {
+            addressAmountMap[address] += amt;
+        } else {
+            addressAmountMap[address] = amt;
+        }
+    }
     
-    return sendResponse(res, 200, true, 'Purchase history created successfully', {referAddress,amount, purchaseHistories,commissionHistories})
+    // Convert the map back to arrays
+    const combinedReferAddress = [];
+    const combinedAmount = [];
+    
+    for (const [address, amt] of Object.entries(addressAmountMap)) {
+        combinedReferAddress.push(address);
+        combinedAmount.push(amt);
+    }
+    
+    
+    
+    return sendResponse(res, 200, true, 'Purchase history created successfully', {"referAddress":combinedReferAddress,"amount":combinedAmount})
 
 
 }
