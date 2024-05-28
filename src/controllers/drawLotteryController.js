@@ -49,8 +49,6 @@ const createLotteryDraw = async (req, res) => {
             }
         }
 
-        const premiumUsers = await User.find({ userType: 'premium' });
-
         const randomWinnersAggregation = await PurchaseHistory.aggregate([
             { $match: { lotteryId: lotteryId } },
             { $group: { _id: '$ticketId', userId: { $first: '$userId' } } },

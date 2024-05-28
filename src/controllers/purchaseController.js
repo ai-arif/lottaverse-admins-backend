@@ -9,6 +9,7 @@ const sendResponse = require('../utils/sendResponse')
 const createPurchaseHistory = async (req, res) => {
     try {
         const { ticketIds, lotteryId, transactionHash } = req.body
+
         const userId = req.id
         const pipeline = [
             { $match: { _id: userId } },
@@ -30,14 +31,24 @@ const createPurchaseHistory = async (req, res) => {
         const referrers = referrerHierarchy.length > 0 ? referrerHierarchy[0].referrers : [];
         // get the user whose level is 0    
 
-        const currentUser= referrers.find(referrer => referrer.level === 0)
+        const currentUser = referrers.find(referrer => referrer.level === 0)
 
         const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
         // totalPurchased field of lottery will be increased by ticketIds.length
         await lotterySchema.findOneAndUpdate({ "lotteryID": lotteryId }, { $inc: { totalPurchased: ticketIds.length } })
-
-        let totalPaid=lottery?.ticketPrice * ticketIds?.length 
-        console.log("totalPaid",totalPaid)
+        const premiumUsers = await User.find({ userType: 'premium' });
+        let totalPaid = lottery?.ticketPrice * ticketIds?.length
+        // calculate 10% of the total ticket price and divide it with the number of premium users
+        const commissionAmount = (totalPaid * 0.1) / premiumUsers.length
+        // update the premium users earnings field by adding the commission amount, earnings field will be increased by commissionAmount, also increase the commissionEarnings
+        const userIds = premiumUsers.map(user => user._id);
+        await User.updateMany(
+            { _id: { $in: userIds } },
+            {
+                $inc: { earnings: commissionAmount, commissionEarnings: commissionAmount }
+            }
+        );
+        console.log("totalPaid", totalPaid)
         console.log("ticket id length", ticketIds.length)
         // await User.findByIdAndUpdate(userId, { $inc: { payout: totalPaid, totalTickets: ticketIds.length }, expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) })
         await User.findByIdAndUpdate(
@@ -95,18 +106,18 @@ const createPurchaseHistory = async (req, res) => {
         await CommissionHistory.insertMany(commissionHistories)
 
         for (let i = 0; i < commissionHistories.length; i++) {
-            
+
             await User.findByIdAndUpdate(
                 commissionHistories[i].to,
-                { 
-                    $inc: { 
+                {
+                    $inc: {
                         earnings: commissionHistories[i].amount,
-                        commissionEarnings: commissionHistories[i].amount 
-                    } 
+                        commissionEarnings: commissionHistories[i].amount
+                    }
                 }
             );
         }
-        
+
 
 
         const data = {
@@ -178,23 +189,23 @@ const prePurchase = async (req, res) => {
     const referrerHierarchy = await User.aggregate(pipeline);
 
     const referrers = referrerHierarchy.length > 0 ? referrerHierarchy[0].referrers : [];
-    
+
 
     const lottery = await lotterySchema.findOne({ "lotteryID": lotteryId })
     // calculate 10% of the total ticket price
-    const totalPaid=lottery?.ticketPrice * ticketIds?.length
+    const totalPaid = lottery?.ticketPrice * ticketIds?.length
     // calculate 10% of the total ticket price and divide it with the number of premium users
     const commissionAmount = (totalPaid * 0.1) / premiumUsers.length
-    
-    
+
+
     if (!lottery) {
         return sendResponse(res, 404, 'Lottery not found')
     }
 
     let ticketNumbers = ticketIds.map(ids => parseInt(ids.join(''), 10));
-    
-    const referAddress=[]
-    const amount=[]
+
+    const referAddress = []
+    const amount = []
 
     for (let i = 0; i < referrers.length; i++) {
         if (referrers[i].level == 0) continue
@@ -204,10 +215,10 @@ const prePurchase = async (req, res) => {
             const commissionAmount = (percentage / 100) * lottery.ticketPrice
             referAddress.push(referrers[i].address)
             amount.push(commissionAmount)
-            
+
         }
     }
-    
+
     for (let i = 0; i < premiumUsers.length; i++) {
         referAddress.push(premiumUsers[i].address)
         amount.push(commissionAmount)
@@ -222,25 +233,25 @@ const prePurchase = async (req, res) => {
             addressAmountMap[address] = amt;
         }
     }
-    
+
     // Convert the map back to arrays
     const combinedReferAddress = [];
     const combinedAmount = [];
-    
+
     for (const [address, amt] of Object.entries(addressAmountMap)) {
         combinedReferAddress.push(address);
         combinedAmount.push(amt);
     }
-    
-    
-    
-    return sendResponse(res, 200, true, 'Purchase history created successfully', {"referAddress":combinedReferAddress,"amount":combinedAmount})
+
+
+
+    return sendResponse(res, 200, true, 'Purchase history created successfully', { "referAddress": combinedReferAddress, "amount": combinedAmount })
 
 
 }
 
 
-        
+
 
 
 
