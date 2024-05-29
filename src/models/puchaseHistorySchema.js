@@ -12,6 +12,9 @@ const purchaseHistorySchema = new mongoose.Schema({
         unique: true,
         trim: true
     },
+    ticketString:{
+        type:String,
+    },
     lotteryId:{
         type:Number,
         required:true

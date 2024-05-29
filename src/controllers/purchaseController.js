@@ -63,20 +63,18 @@ const createPurchaseHistory = async (req, res) => {
         if (!lottery) {
             return sendResponse(res, 404, 'Lottery not found')
         }
-
+        const ticketStrings = ticketIds.map(ids => ids.join(' '));
         let ticketNumbers = ticketIds.map(ids => parseInt(ids.join(''), 10));
-        let purchaseHistories = ticketNumbers.map(ticketNumber => {
-
-            return {
-                userId,
-                ticketId: ticketNumber,
-                lotteryId,
-                lotteryPackage: lottery.lotteryType,
-                ticketQuantity: 1,
-                transactionHash,
-                amount: lottery.ticketPrice
-            }
-        });
+        const purchaseHistories = ticketNumbers.map((ticketNumber, index) => ({
+            userId,
+            ticketId: ticketNumber.toString(),
+            ticketString: ticketStrings[index],
+            lotteryId,
+            lotteryPackage: lottery.lotteryType,
+            ticketQuantity: 1,
+            transactionHash,
+            amount:lottery.ticketPrice
+        }));
 
 
         const commissionHistories = []
