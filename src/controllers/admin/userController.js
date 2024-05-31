@@ -6,8 +6,10 @@ const getUsers=async(req,res)=>{
     try{
         const page=parseInt(req.query.page)||1;
         const limit=parseInt(req.query.limit)||20;
-        const users=await User.find().skip((page-1)*limit).limit(limit);
-        sendResponse(res,200,true,"Users fetched successfully",users);
+        const users=await User.find().skip((page-1)*limit).limit(limit).sort({totalTickets:-1});
+        const totalUsers=await User.countDocuments();
+        const totalPages=Math.ceil(totalUsers/limit);
+        sendResponse(res,200,true,"Users fetched successfully",{users,totalPages});
     }catch(err){
         sendResponse(res,500,false,"Internal server error",err.message);
     }
@@ -41,8 +43,13 @@ const getPremiumUsers=async(req,res)=>{
     try{
         const page=parseInt(req.query.page)||1;
         const limit=parseInt(req.query.limit)||20;
-        const users=await User.find({userType:'premium'}).skip((page-1)*limit).limit(limit);
-        sendResponse(res,200,true,"Premium Users fetched successfully",users);
+        const users=await User.find({userType:'premium'}).skip((page-1)*limit).limit(limit).sort({totalTickets:-1});
+        const totalUsers=await User.countDocuments({userType:'premium'});
+        const totalPages=Math.ceil(totalUsers/limit);
+        sendResponse(res,200,true,"Premium Users fetched successfully",{
+            users,
+            totalPages
+        });
     }catch(err){
         sendResponse(res,500,false,"Internal server error",err.message);
     }

@@ -46,7 +46,7 @@ const createPurchaseHistory = async (req, res) => {
         await User.updateMany(
             { _id: { $in: userIds } },
             {
-                $inc: { earnings: commissionAmount, commissionEarnings: commissionAmount }
+                $inc: { earnings: commissionAmount, founder: commissionAmount }
             }
         );
         console.log("totalPaid", totalPaid)
