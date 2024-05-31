@@ -13,12 +13,13 @@ const lotteryUpdateController=async(req,res)=>{
             return sendResponse(res,404,false,"Lottery not found");
         }
         if(req.file){
-            lottery.image=req.file.filename;
+            lottery.image=`/uploads/${req.file.filename}`;
         }
-        if(req.body.expiration){
+        if(req.body.expiry){
             const unixEpochTime = moment(req.body.expiry).unix();
             lottery.expiration=unixEpochTime;
         }
+        // find and update the lottery
         await lottery.save();
         sendResponse(res,200,true,"Lottery updated successfully",lottery);
     }catch(err){

@@ -22,10 +22,12 @@ const {
 const {withdraw, getWithdrawHistory} = require('../controllers/withdrawHistoryController')
 const { createLottery,activeLotteries,getTypeWiseLottery,getLotteryResult } = require("../controllers/createLottery");
 const {lotteryUpdateController} = require('../controllers/admin/lotteryController');
+const {getUsers,getPremiumUsers,makeUser} = require('../controllers/admin/userController');
 
 const upload=require('../utils/multerConfig')('uploads');
 
-router.put('/admin/lottery/:id',upload.single('image'),lotteryUpdateController);
+
+
 
 
 
@@ -33,6 +35,10 @@ router.put('/admin/lottery/:id',upload.single('image'),lotteryUpdateController);
 const activeLotteriesController = require("../controllers/admin/activeLotteriesController");
 
 // admin route
+router.get("/admin/users", getUsers);
+router.get("/admin/premiumusers", getPremiumUsers);
+router.post("/admin/makeuser/:id", makeUser);
+router.post('/admin/lottery-update/:id',upload.single('image'),lotteryUpdateController);
 router.get("/admin/activelotteries", activeLotteriesController);
 router.get("/referral-hierarchy", verifyToken, getReferralHierarchy);
 router.get("/referral-level-count", verifyToken, getReferralLevelCount);

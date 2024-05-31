@@ -5,7 +5,7 @@ const apiRoutes = require("./routes/apiRoutes");
 const db = require("./db_config/db");
 const app = express();
 
-
+app.use('/uploads', express.static('uploads'));
 // Enable CORS
 app.use(cors());
 app.use(express.json());
