@@ -1,4 +1,5 @@
 const User = require('../models/userSchema');
+const CommissionHistory = require('../models/commissionHistory');
 const sendResponse = require('../utils/sendResponse');
 
 exports.getReferralHierarchy = async (req, res) => {
@@ -56,11 +57,12 @@ function calculateReferralData2(user) {
         referralLevel: idx + 1,
         totalUsers: 0,
         activeUsers: 0,
-        inactiveUsers: 0
+        inactiveUsers: 0,
+        totalCommission: 0 // New field to track total commission
     }));
 
     // Recursive function to traverse the referral hierarchy
-    function traverse(node, level) {
+    async function traverse(node, level) {
         if (level > maxLevel) return;
 
         referralData[level - 1].totalUsers++;
@@ -71,18 +73,23 @@ function calculateReferralData2(user) {
             referralData[level - 1].inactiveUsers++;
         }
 
+        // Calculate the total commission for this user
+        const commissionHistories = await CommissionHistory.find({ to: node._id });
+        commissionHistories.forEach(commission => {
+            referralData[level - 1].totalCommission += commission.amount;
+        });
+
         if (node.referredUsers && node.referredUsers.length > 0) {
-            node.referredUsers.forEach(referredUser => {
-                traverse(referredUser, level + 1);
-            });
+            for (let referredUser of node.referredUsers) {
+                await traverse(referredUser, level + 1);
+            }
         }
     }
 
-    traverse(user, 1); // Start traversal from the root user
+    traverse(user, 1); 
 
     return referralData;
 }
-
 
 exports.getReferralLevelCount = async (req, res) => {
     try {
@@ -112,7 +119,7 @@ exports.getReferralLevelCount = async (req, res) => {
         });
 
         // Calculate referral data as an array of objects
-        const referralData = calculateReferralData2(user);
+        const referralData = await calculateReferralData2(user);
 
         sendResponse(res, 200, true, 'Referral level count fetched successfully', referralData);
     } catch (err) {

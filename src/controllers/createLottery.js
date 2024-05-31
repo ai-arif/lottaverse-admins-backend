@@ -163,8 +163,9 @@ const activeLotteries = async (req, res) => {
       .populate({
         path: 'randomWinners.userId',
         select: 'address',
-        options: { limit: 1 } // Limit to the first random winner
       });
+
+      
 
     activeLotteries.forEach(lottery => {
       const lotteryDraw = lotteryDraws.find(draw => draw.lotteryId === lottery.lotteryID);
