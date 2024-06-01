@@ -51,17 +51,16 @@ function buildHierarchy(user) {
 
     return hierarchy;
 }
-function calculateReferralData2(user) {
+async function calculateReferralData2(user) {
     const maxLevel = 7;
     const referralData = new Array(maxLevel).fill(0).map((_, idx) => ({
         referralLevel: idx + 1,
         totalUsers: 0,
         activeUsers: 0,
         inactiveUsers: 0,
-        totalCommission: 0 // New field to track total commission
+        commissionAmount: 0
     }));
 
-    // Recursive function to traverse the referral hierarchy
     async function traverse(node, level) {
         if (level > maxLevel) return;
 
@@ -73,11 +72,10 @@ function calculateReferralData2(user) {
             referralData[level - 1].inactiveUsers++;
         }
 
-        // Calculate the total commission for this user
-        const commissionHistories = await CommissionHistory.find({ to: node._id });
-        commissionHistories.forEach(commission => {
-            referralData[level - 1].totalCommission += commission.amount;
-        });
+        // Fetch and aggregate commission amounts for the current node
+        const commissions = await CommissionHistory.find({ to: node._id, level: level });
+        const totalCommission = commissions.reduce((acc, commission) => acc + commission.amount, 0);
+        referralData[level - 1].commissionAmount += totalCommission;
 
         if (node.referredUsers && node.referredUsers.length > 0) {
             for (let referredUser of node.referredUsers) {
@@ -86,7 +84,7 @@ function calculateReferralData2(user) {
         }
     }
 
-    traverse(user, 1); 
+    await traverse(user, 1); 
 
     return referralData;
 }
@@ -94,8 +92,6 @@ function calculateReferralData2(user) {
 exports.getReferralLevelCount = async (req, res) => {
     try {
         const userId = req.id;
-
-        // Fetch the user with the referral hierarchy populated
         const user = await User.findById(userId).populate({
             path: 'referredUsers',
             populate: {
@@ -118,7 +114,7 @@ exports.getReferralLevelCount = async (req, res) => {
             }
         });
 
-        // Calculate referral data as an array of objects
+        // Calculate referral data as an array of objects, including commission amounts
         const referralData = await calculateReferralData2(user);
 
         sendResponse(res, 200, true, 'Referral level count fetched successfully', referralData);
@@ -126,7 +122,6 @@ exports.getReferralLevelCount = async (req, res) => {
         sendResponse(res, 500, false, 'Internal server error', err.message);
     }
 };
-
 // get referralLevel group by count, and sort by count, also check how many of them are active, and inactive
 // exports.getReferralLevelCount = async (req, res) => {
 //     try {
