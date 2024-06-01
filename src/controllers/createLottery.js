@@ -103,13 +103,6 @@ const createLottery = async (req, res) => {
 const activeLotteries = async (req, res) => {
   try {
 
-
-    // const activeLotteries = await Lottery.aggregate([
-    //   { $match: { isActive: true } }, 
-    //   { $sort: { createdAt: -1 } }, 
-    //   { $group: { _id: "$lotteryType", count: { $sum: 1 } } },
-    //   { $limit: 2 },
-    // ]);
     const recentActiveLotteries = await Lottery.find({ isActive: true })
       .sort({ createdAt: -1 })
       .limit(2)
@@ -138,6 +131,7 @@ const activeLotteries = async (req, res) => {
     });
     // get number of users who have bought tickets for the lottery
     const lotteryIds = activeLotteries.map(lottery => lottery.lotteryID);
+    const lotteryDBIds = activeLotteries.map(lottery => lottery._id);
     // userId  count the unique number of users who have bought tickets for the lottery
     const userCounts = await PurchaseHistory.aggregate([
       { $match: { lotteryId: { $in: lotteryIds } } },
@@ -199,6 +193,27 @@ const activeLotteries = async (req, res) => {
         lottery.thirdWinner = null;
         lottery.randomWinner = null;
       }
+    });
+    
+    // new lines
+    const previousLotteries = await Lottery.find({
+      lotteryType: { $in: lotteryTypes },
+      _id: { $nin: lotteryDBIds },
+      hasDraw: true
+    }).sort({ createdAt: -1 }).lean();
+
+    // Calculate previous unlocked amounts
+    const previousUnlockedAmounts = lotteryTypes.reduce((acc, type) => {
+      const previousLottery = previousLotteries.find(lottery => lottery.lotteryType === type);
+      if (previousLottery) {
+        acc[type] = 0.05 * previousLottery.maxTickets * previousLottery.ticketPrice;
+      }
+      return acc;
+    }, {});
+
+    // Add previous unlocked amount to active lotteries
+    activeLotteries.forEach(lottery => {
+      lottery.previousUnlockedAmount = previousUnlockedAmounts[lottery.lotteryType] || 0;
     });
     sendResponse(res, 200, true, "Active lotteries", activeLotteries);
   } catch (error) {

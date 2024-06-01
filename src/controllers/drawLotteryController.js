@@ -71,18 +71,21 @@ const createLotteryDraw = async (req, res) => {
                 userId: secondWinner.userId._id,
                 commission_sent: false,
                 ticketId: secondWinner.ticketId,
+                ticketString: secondWinner.ticketString,
                 amount: null
             } : null,
             thirdWinner: thirdWinner ? {
                 userId: thirdWinner.userId._id,
                 commission_sent: false,
                 ticketId: thirdWinner.ticketId,
+                ticketString: thirdWinner.ticketString,
                 amount: null
             } : null,
             randomWinners: randomWinners.map(winner => ({
                 userId: winner.userId,
                 commission_sent: false,
                 ticketId: winner.ticketId,
+                ticketString: winner.ticketString,
                 amount: null
             }))
         });
