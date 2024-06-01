@@ -71,8 +71,8 @@ const lotteryDrawSchema = new mongoose.Schema({
         }, 
         ticketString: {
             type: String,
-            required: true,
-            unique: true,
+            // required: true,
+            // unique: true,
             trim: true
         },    
         amount: {
@@ -98,8 +98,8 @@ const lotteryDrawSchema = new mongoose.Schema({
         },
         ticketString: {
             type: String,
-            required: true,
-            unique: true,
+            // required: true,
+            // unique: true,
             trim: true
         },
         amount: {
@@ -123,14 +123,14 @@ const lotteryDrawSchema = new mongoose.Schema({
         },
         ticketId: {
             type: String,
-            required: true,
-            unique: true,
+            // required: true,
+            // unique: true,
             trim: true
         },
         ticketString: {
             type: String,
-            required: true,
-            unique: true,
+            // required: true,
+            // unique: true,
             trim: true
         },
     }]

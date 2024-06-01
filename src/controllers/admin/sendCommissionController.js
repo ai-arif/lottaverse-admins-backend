@@ -9,7 +9,7 @@ const sendSecondWinnerCommission = async (req, res) => {
       const { lotteryId } = req.params;
   
       const lotteryDraw = await LotteryDraw.findOne({ lotteryId });
-  
+    
       if (!lotteryDraw || !lotteryDraw.secondWinner) {
         return sendResponse(res, 404, false, 'Second winner not found or commission already sent');
       }
@@ -20,14 +20,9 @@ const sendSecondWinnerCommission = async (req, res) => {
         return sendResponse(res, 400, false, 'Commission already sent to the second winner');
       }
   
-      // Logic to send commission
-      // Example: await sendCommissionToUser(secondWinner.userId, secondWinner.amount);
-  
       secondWinner.commission_sent = true;
-
       await lotteryDraw.save();
-    //   userId increment the userId's jackpotEarnings by the amount of the secondWinner, and then save the user, get the amount from Lottery schema ,lottery.prizes.secondPrize
-        const lottery = await Lottery.findOne({ lotteryId });
+        const lottery = await Lottery.findOne({ lotteryID:lotteryId });
       const user = await User.findById(secondWinner.userId);
         user.jackpotEarnings += lottery.prizes.secondPrize;
         await user.save();
@@ -55,13 +50,10 @@ const sendSecondWinnerCommission = async (req, res) => {
         return sendResponse(res, 400, false, 'Commission already sent to the third winner');
       }
   
-      // Logic to send commission
-      // Example: await sendCommissionToUser(thirdWinner.userId, thirdWinner.amount);
-  
       thirdWinner.commission_sent = true;
       await lotteryDraw.save();
 
-        const lottery = await Lottery.findOne({ lotteryId });
+        const lottery = await Lottery.findOne({ lotteryID:lotteryId });
         const user = await User.findById(thirdWinner.userId);
         user.jackpotEarnings += lottery.prizes.thirdPrize;
         await user.save();
