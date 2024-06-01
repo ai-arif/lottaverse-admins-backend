@@ -29,6 +29,30 @@ const lotteryDrawSchema = new mongoose.Schema({
             default: null
         }
     }],
+    firstWinner: {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
+        commission_sent: {
+            type: Boolean,
+            default: false
+        },
+        ticketId: {
+            type: String,
+            trim: true
+        }, 
+        ticketString: {
+            type: String,
+            trim: true
+        },    
+        amount: {
+            type: Number,
+            default: null
+        },
+        
+
+    },
     secondWinner: {
         userId: {
             type: mongoose.Schema.Types.ObjectId,

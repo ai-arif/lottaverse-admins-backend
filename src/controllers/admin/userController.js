@@ -54,9 +54,37 @@ const getPremiumUsers=async(req,res)=>{
         sendResponse(res,500,false,"Internal server error",err.message);
     }
 }
+const searchUsersByAddress = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const address = req.query.address;
+
+        if (!address) {
+            return sendResponse(res, 400, false, "Address query parameter is required");
+        }
+
+        const users = await User.find({ address: { $regex: address, $options: 'i' } })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .sort({ totalTickets: -1 });
+
+        const totalUsers = await User.countDocuments({ address: { $regex: address, $options: 'i' } });
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        sendResponse(res, 200, true, "Users fetched successfully", {
+            users,
+            totalPages
+        });
+    } catch (err) {
+        sendResponse(res, 500, false, "Internal server error", err.message);
+    }
+};
+
 
 module.exports={
     getUsers,
     makeUser,
-    getPremiumUsers
+    getPremiumUsers,
+    searchUsersByAddress
 }

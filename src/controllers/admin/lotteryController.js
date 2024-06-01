@@ -15,7 +15,8 @@ const lotteryUpdateController=async(req,res)=>{
         if(req.file){
             lottery.image=`/uploads/${req.file.filename}`;
         }
-        if(req.body.expiry){
+        if(req.body.expiry!=null || req.body.expiry!=undefined || req.body.expiry!="null"){
+            console.log(req.body.expiry);
             const unixEpochTime = moment(req.body.expiry).unix();
             lottery.expiration=unixEpochTime;
         }

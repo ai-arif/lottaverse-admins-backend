@@ -76,7 +76,7 @@ const sendSecondWinnerCommission = async (req, res) => {
   const sendRandomWinnersCommission = async (req, res) => {
     try {
       const { lotteryId } = req.params;
-      const { addresses } = req.body; // Array of addresses
+      const { addresses } = req.body;
   
       const lotteryDraw = await LotteryDraw.findOne({ lotteryId }).populate('randomWinners.userId');
   
@@ -95,7 +95,7 @@ const sendSecondWinnerCommission = async (req, res) => {
       for (const winner of winnersToUpdate) {
         winner.commission_sent = true;
       }
-      
+
       await lotteryDraw.save();
       sendResponse(res, 200, true, 'Commission sent to random winners', winnersToUpdate);
     } catch (error) {
