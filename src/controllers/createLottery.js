@@ -279,9 +279,14 @@ const getLotteryResult = async (req, res) => {
         select: '_id address' // Add fields you want to select
       },
       {
+        path: 'firstWinner.userId',
+        model: 'User',
+        select: '_id address' 
+      },
+      {
         path: 'secondWinner.userId',
         model: 'User',
-        select: '_id address' // Add fields you want to select
+        select: '_id address' 
       },
       {
         path: 'thirdWinner.userId',
@@ -298,19 +303,32 @@ const getLotteryResult = async (req, res) => {
     if (!lotteryDraw) {
       return sendResponse(res, 404, false, 'Lottery not drawn yet');
     }
+    
 
     // Prepare the winners array
     const winners = [];
-
+    console.log(lotteryDraw.firstWinner)
+    if (lotteryDraw.firstWinner?.userId) {
+      winners.push({
+        position: "First Winner",
+        userId: lotteryDraw.firstWinner.userId._id,
+        address: lotteryDraw.firstWinner.userId.address,
+        ticketId: lotteryDraw.firstWinner.ticketId,
+        ticketString: lotteryDraw.firstWinner.ticketString,
+        amount: lottery.prizes.firstPrize
+      });
+    }
     if (lotteryDraw.secondWinner) {
       winners.push({
         position: "Second Winner",
         userId: lotteryDraw.secondWinner.userId._id,
         address: lotteryDraw.secondWinner.userId.address,
         ticketId: lotteryDraw.secondWinner.ticketId,
+        ticketString: lotteryDraw.secondWinner.ticketString,
         amount: lottery.prizes.secondPrize
       });
     }
+    
 
     if (lotteryDraw.thirdWinner) {
       winners.push({
@@ -318,6 +336,7 @@ const getLotteryResult = async (req, res) => {
         userId: lotteryDraw.thirdWinner.userId._id,
         address: lotteryDraw.thirdWinner.userId.address,
         ticketId: lotteryDraw.thirdWinner.ticketId,
+        ticketString: lotteryDraw.thirdWinner.ticketString,
         amount: lottery.prizes.thirdPrize
       });
     }
@@ -329,11 +348,15 @@ const getLotteryResult = async (req, res) => {
           userId: winner.userId._id,
           address: winner.userId.address,
           ticketId: winner.ticketId,
+          ticketString: winner.ticketString,
           amount: lottery.prizes.otherPrizes
         });
       });
     }
-
+    // format the address
+    winners.forEach(winner => {
+      winner.address = formatAddress(winner.address);
+    });
     return sendResponse(res, 200, true, "Lottery Draw", winners);
   } catch (error) {
     sendResponse(res, 500, false, error.message);

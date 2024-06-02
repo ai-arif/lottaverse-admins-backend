@@ -58,7 +58,8 @@ const getFirstWinnerPurchaseByIndex = async (req, res) => {
 //         },
 //     },
         // add the firstwinner to the lotteryDraw if it is not already there
-        if (!lotteryDraw.firstWinner) {
+        
+        if (!lotteryDraw.firstWinner?.userId) {
             lotteryDraw.firstWinner = {
                 userId: user._id,
                 ticketId,
@@ -68,7 +69,7 @@ const getFirstWinnerPurchaseByIndex = async (req, res) => {
             };
             await lotteryDraw.save();
             console.log('First winner added to the lottery draw');
-            
+
         }
         // Send the response with ticket information
         sendResponse(res, 200, true, 'Ticket information retrieved successfully', { ticketId, ticketString });
