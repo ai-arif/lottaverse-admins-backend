@@ -50,8 +50,6 @@ const lotteryDrawSchema = new mongoose.Schema({
             type: Number,
             default: null
         },
-        
-
     },
     secondWinner: {
         userId: {

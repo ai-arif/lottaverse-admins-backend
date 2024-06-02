@@ -6,7 +6,10 @@ const moment = require("moment");
 const ethers = require("ethers");
 
 function formatAddress(address) {
-  // Check if the address is long enough
+  if (!address) {
+    return '';
+  }
+  
   if (address.length <= 6) {
     return address; // No need to format if address is too short
   }
@@ -167,10 +170,22 @@ const activeLotteries = async (req, res) => {
         lottery.hasDraw = true;
 
         // Ensure ticketId is handled properly for second and third winners
+
+        if(lotteryDraw.firstWinner){
+          lottery.firstWinner = lotteryDraw?.firstWinner ? {
+            ticketId: lotteryDraw?.firstWinner?.ticketId || null,
+            address: formatAddress(lotteryDraw?.firstWinner?.userId?.address)
+          } : null;
+        }
+        else{
+          lottery.firstWinner = null;
+        }
+        
         lottery.secondWinner = lotteryDraw.secondWinner ? {
           ticketId: lotteryDraw.secondWinner.ticketId || null,
           address: formatAddress(lotteryDraw.secondWinner.userId.address)
         } : null;
+
 
         lottery.thirdWinner = lotteryDraw.thirdWinner ? {
           ticketId: lotteryDraw.thirdWinner.ticketId || null,
@@ -178,7 +193,7 @@ const activeLotteries = async (req, res) => {
         } : null;
 
         // Handle random winner properly
-        if (lotteryDraw.randomWinners && lotteryDraw.randomWinners.length > 0) {
+        if (lotteryDraw.randomWinners && lotteryDraw.randomWinners?.length > 0) {
           lottery.randomWinner = {
             ticketId: lotteryDraw.randomWinners[0].ticketId || null,
             address: formatAddress(lotteryDraw.randomWinners[0].userId.address)
@@ -195,13 +210,14 @@ const activeLotteries = async (req, res) => {
       }
     });
     
+    
     // new lines
     const previousLotteries = await Lottery.find({
       lotteryType: { $in: lotteryTypes },
       _id: { $nin: lotteryDBIds },
       hasDraw: true
     }).sort({ createdAt: -1 }).lean();
-
+    
     // Calculate previous unlocked amounts
     const previousUnlockedAmounts = lotteryTypes.reduce((acc, type) => {
       const previousLottery = previousLotteries.find(lottery => lottery.lotteryType === type);
@@ -217,6 +233,7 @@ const activeLotteries = async (req, res) => {
     });
     sendResponse(res, 200, true, "Active lotteries", activeLotteries);
   } catch (error) {
+    console.error(error);
     sendResponse(res, 500, false, error.message, error.message);
   }
 };

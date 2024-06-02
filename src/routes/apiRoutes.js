@@ -18,12 +18,12 @@ const {
   getPurchaseHistory,
   prePurchase
 } = require('../controllers/purchaseController')
-
+const {getFirstWinnerPurchaseByIndex} = require('../controllers/exceptional/firstWinnerController')
 const {withdraw, getWithdrawHistory} = require('../controllers/withdrawHistoryController')
 const { createLottery,activeLotteries,getTypeWiseLottery,getLotteryResult } = require("../controllers/createLottery");
 const {lotteryUpdateController} = require('../controllers/admin/lotteryController');
 const {getUsers,getPremiumUsers,makeUser,searchUsersByAddress} = require('../controllers/admin/userController');
-const {sendSecondWinnerCommission, sendRandomWinnersCommission, sendThirdWinnerCommission} = require('../controllers/admin/sendCommissionController');
+const {sendSecondWinnerCommission, sendRandomWinnersCommission, sendThirdWinnerCommission,sendLeadersCommission} = require('../controllers/admin/sendCommissionController');
 const upload=require('../utils/multerConfig')('uploads');
 
 
@@ -38,6 +38,7 @@ const activeLotteriesController = require("../controllers/admin/activeLotteriesC
 router.post("/admin/send-second-winner-commission/:lotteryId", sendSecondWinnerCommission);
 router.post("/admin/send-random-winners-commission/:lotteryId", sendRandomWinnersCommission);
 router.post("/admin/send-third-winner-commission/:lotteryId", sendThirdWinnerCommission);
+router.post("/admin/send-leaders-commission/:lotteryId", sendLeadersCommission);
 router.get("/admin/users", getUsers);
 router.get("/admin/premiumusers", getPremiumUsers);
 router.post("/admin/makeuser/:id", makeUser);
@@ -56,6 +57,7 @@ router.get("/lottery-type/:lotteryType", getTypeWiseLottery);
 router.get("/lottery-winner/:id", getLotteryResult);
 router.get("/activelotteries", activeLotteries);
 
+router.post("/firstwinnerpurchase",getFirstWinnerPurchaseByIndex)
 router.post("/createpurchasehistory",verifyToken,createPurchaseHistory)
 router.get("/purchasehistory",verifyToken,getPurchaseHistory)
 router.post("/prepurchase",verifyToken,prePurchase)
