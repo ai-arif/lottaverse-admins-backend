@@ -5,7 +5,9 @@ const sendResponse = require('../utils/sendResponse');
 exports.getLeaderboard = async (req, res) => {
     try {
         // Fetch the top 30 users based on payout
-        let leaderboard = await User.find()
+        let leaderboard = await User.find({
+            payout: { $gt: 0 }
+        })
             .select(['_id', 'address', 'payout', 'createdAt', 'referralId', 'totalTickets'])
             .sort({ payout: -1 })
             .limit(30);

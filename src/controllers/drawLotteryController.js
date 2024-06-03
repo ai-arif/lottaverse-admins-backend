@@ -51,14 +51,20 @@ const createLotteryDraw = async (req, res) => {
 
         const randomWinnersAggregation = await PurchaseHistory.aggregate([
             { $match: { lotteryId: lotteryId } },
-            { $group: { _id: '$ticketId', userId: { $first: '$userId' } } },
+            { $group: { 
+                _id: '$ticketId', 
+                userId: { $first: '$userId' },
+                ticketString: { $first: '$ticketString' } 
+            }},
             { $sample: { size: 1000 } }
         ]);
-
+        
         const randomWinners = randomWinnersAggregation.map(item => ({
             ticketId: item._id,
-            userId: item.userId
+            userId: item.userId,
+            ticketString: item.ticketString
         }));
+        
 
         const lotteryDraw = new LotteryDraw({
             lotteryId,
@@ -92,7 +98,8 @@ const createLotteryDraw = async (req, res) => {
 
         await lotteryDraw.save();
         await Lottery.updateOne({ lotteryID: lotteryId }, { hasDraw: true });
-        await User.updateMany({ payout: { $gt: 0 } }, { payout: 0, totalTickets: 0 });
+        
+        await User.updateMany({ payout: { $gt: 0 } }, { totalTickets: 0 });
 
         return sendResponse(res, 200, 'Lottery draw created successfully', lotteryDraw);
     } catch (error) {

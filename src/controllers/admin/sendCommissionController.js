@@ -101,6 +101,8 @@ const sendLeadersCommission = async (req, res) => {
         });
 
         await lotteryDraw.save();
+        // increment the users founder commission by 5% of the total ticket price
+        
 
         sendResponse(res, 200, true, 'Commission sent to leaders', leaders);
     } catch (error) {

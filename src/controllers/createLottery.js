@@ -15,11 +15,11 @@ function formatAddress(address) {
   }
 
   // Extract the first 3 and last 3 characters
-  const firstPart = address.slice(0, 4);
-  const lastPart = address.slice(-4);
+  const firstPart = address.slice(0, 3);
+  const lastPart = address.slice(-3);
 
   // Return the formatted address
-  return `${firstPart}***${lastPart}`;
+  return `${firstPart}**${lastPart}`;
 }
 const createLottery = async (req, res) => {
   try {
@@ -174,6 +174,7 @@ const activeLotteries = async (req, res) => {
         if(lotteryDraw.firstWinner){
           lottery.firstWinner = lotteryDraw?.firstWinner ? {
             ticketId: lotteryDraw?.firstWinner?.ticketId || null,
+            ticketString: lotteryDraw?.firstWinner?.ticketString || null,
             address: formatAddress(lotteryDraw?.firstWinner?.userId?.address)
           } : null;
         }
@@ -183,12 +184,14 @@ const activeLotteries = async (req, res) => {
         
         lottery.secondWinner = lotteryDraw.secondWinner ? {
           ticketId: lotteryDraw.secondWinner.ticketId || null,
+          ticketString: lotteryDraw.secondWinner.ticketString || null,
           address: formatAddress(lotteryDraw.secondWinner.userId.address)
         } : null;
 
 
         lottery.thirdWinner = lotteryDraw.thirdWinner ? {
           ticketId: lotteryDraw.thirdWinner.ticketId || null,
+          ticketString: lotteryDraw.thirdWinner.ticketString || null,
           address: formatAddress(lotteryDraw.thirdWinner.userId.address)
         } : null;
 
@@ -196,6 +199,7 @@ const activeLotteries = async (req, res) => {
         if (lotteryDraw.randomWinners && lotteryDraw.randomWinners?.length > 0) {
           lottery.randomWinner = {
             ticketId: lotteryDraw.randomWinners[0].ticketId || null,
+            ticketString: lotteryDraw.randomWinners[0].ticketString || null,
             address: formatAddress(lotteryDraw.randomWinners[0].userId.address)
           };
         } else {
@@ -212,13 +216,18 @@ const activeLotteries = async (req, res) => {
     
     
     // new lines
+    // const previousLotteries = await Lottery.find({
+    //   lotteryType: { $in: lotteryTypes },
+    //   _id: { $nin: lotteryDBIds },
+    //   hasDraw: true
+    // }).sort({ createdAt: -1 }).lean();
+    // activeLotteries previous will be the last hasDrawn true lotteries of the same type
     const previousLotteries = await Lottery.find({
       lotteryType: { $in: lotteryTypes },
-      _id: { $nin: lotteryDBIds },
       hasDraw: true
     }).sort({ createdAt: -1 }).lean();
+    // Calculate the previous unlocked amount for each lottery type
     
-    // Calculate previous unlocked amounts
     const previousUnlockedAmounts = lotteryTypes.reduce((acc, type) => {
       const previousLottery = previousLotteries.find(lottery => lottery.lotteryType === type);
       if (previousLottery) {
