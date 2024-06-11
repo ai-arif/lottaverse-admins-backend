@@ -9,6 +9,7 @@ const verifyAdminToken=async(req,res,next)=>{
         if(!admin){
             return res.status(401).json({success:false,message:'Invalid token'});
         }
+        req.id=admin._id;
         next();
     }
     catch(err){
