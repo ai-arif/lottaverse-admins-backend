@@ -52,7 +52,7 @@ function buildHierarchy(user) {
     return hierarchy;
 }
 async function calculateReferralData2(user) {
-    const maxLevel = 7;
+    const maxLevel = 8;
     const referralData = new Array(maxLevel).fill(0).map((_, idx) => ({
         referralLevel: idx + 1,
         totalUsers: 0,
@@ -72,7 +72,6 @@ async function calculateReferralData2(user) {
             referralData[level - 1].inactiveUsers++;
         }
 
-        // Fetch and aggregate commission amounts for the current node
         const commissions = await CommissionHistory.find({ to: node._id, level: level });
         const totalCommission = commissions.reduce((acc, commission) => acc + commission.amount, 0);
         referralData[level - 1].commissionAmount += totalCommission;
@@ -113,6 +112,7 @@ exports.getReferralLevelCount = async (req, res) => {
                 }
             }
         });
+        // return res.json(user);
 
         // Calculate referral data as an array of objects, including commission amounts
         const referralData = await calculateReferralData2(user);
@@ -122,31 +122,7 @@ exports.getReferralLevelCount = async (req, res) => {
         sendResponse(res, 500, false, 'Internal server error', err.message);
     }
 };
-// get referralLevel group by count, and sort by count, also check how many of them are active, and inactive
-// exports.getReferralLevelCount = async (req, res) => {
-//     try {
-//         const userId = req.id;
-//         // Fetch the user with the referral hierarchy populated
-//         const user = await User.findById(userId).populate({
-//             path: 'referredUsers',
-//             populate: {
-//                 path: 'referredUsers',
-//                 populate: {
-//                     path: 'referredUsers'
-//                 }
-//             }
-//         });
 
-//         // Calculate referral data as an array of objects
-//         const referralData = calculateReferralData(user);
-
-//         sendResponse(res, 200, true, 'Referral level count fetched successfully', referralData);
-//     } catch (err) {
-//         sendResponse(res, 500, false, 'Internal server error', err.message);
-//     }
-// };
-
-// Function to calculate referral data
 function calculateReferralData(user) {
     const referralData = [];
 
